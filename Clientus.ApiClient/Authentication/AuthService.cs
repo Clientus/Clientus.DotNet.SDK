@@ -11,17 +11,32 @@ namespace Clientus.ApiClient.Authentication;
 public class AuthService
 {
     private readonly ClientusHttpClient _http;
+    private AuthSession? _currentSession;
 
     /// <summary>
     /// Gets the current authenticated session.
     /// Returns <see langword="null"/> when no user is authenticated.
     /// </summary>
-    public AuthSession? CurrentSession { get; private set; }
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
+    public AuthSession? CurrentSession
+    {
+        get
+        {
+            _http.ThrowIfDisposed();
+            return _currentSession;
+        }
+        private set => _currentSession = value;
+    }
 
 
     /// <summary>
     /// Gets a value indicating whether a valid authenticated session is available.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public bool IsAuthenticated =>
         CurrentSession?.IsValid == true;
 
@@ -51,10 +66,15 @@ public class AuthService
     /// <exception cref="OperationCanceledException">
     /// Thrown when cancellation is requested through <paramref name="cancellationToken"/>.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<LoginResponse> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (request is null)
         {
             return new LoginResponse
@@ -184,9 +204,14 @@ public class AuthService
     /// <exception cref="OperationCanceledException">
     /// Thrown when cancellation is requested through <paramref name="cancellationToken"/>.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<LoginResponse> RefreshAsync(
         CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         var refreshToken = CurrentSession?.RefreshToken?.Trim();
 
         if (string.IsNullOrWhiteSpace(refreshToken))
@@ -253,9 +278,14 @@ public class AuthService
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The current authenticated user, or <see langword="null"/> if no session exists.</returns>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<AuthUser?> GetCurrentUserAsync(
     CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (!IsAuthenticated)
             return null;
 
@@ -268,10 +298,14 @@ public class AuthService
     /// Logs out the current user and clears the local session.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task LogoutAsync(
     CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (CurrentSession?.AccessToken is not null)
         {
             try

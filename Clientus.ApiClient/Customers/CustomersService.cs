@@ -30,10 +30,15 @@ public class CustomersService
     /// <returns>
     /// A list of customers.
     /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<IReadOnlyList<Customer>> GetAllAsync(
      int? limit = null,
      CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (limit is <= 0)
             throw new ArgumentOutOfRangeException(nameof(limit));
 
@@ -67,10 +72,15 @@ public class CustomersService
     /// <returns>
     /// The customer if found; otherwise <c>null</c>.
     /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<Customer?> GetByIdAsync(
     string id,
     CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (string.IsNullOrWhiteSpace(id))
             throw new ArgumentException(
                 "L'ID cliente è obbligatorio.",
@@ -105,11 +115,16 @@ public class CustomersService
     /// <returns>
     /// Matching customers.
     /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<IReadOnlyList<Customer>> SearchAsync(
     string text,
     int limit = 20,
     CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (string.IsNullOrWhiteSpace(text))
             return Array.Empty<Customer>();
 

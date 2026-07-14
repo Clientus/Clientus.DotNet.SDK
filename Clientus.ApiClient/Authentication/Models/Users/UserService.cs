@@ -45,10 +45,15 @@ public class UserService
     /// <exception cref="ApiException">
     /// Thrown when the API returns an unsuccessful HTTP status code.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<User?> GetCurrentAsync(
         string userId,
         CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (string.IsNullOrWhiteSpace(userId))
         {
             throw new ArgumentException(
@@ -92,11 +97,16 @@ public class UserService
     /// <exception cref="ApiException">
     /// Thrown when the API returns an unsuccessful HTTP status code.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when the underlying client has been disposed.
+    /// </exception>
     public async Task<IReadOnlyList<User>> SearchAsync(
     string text,
     int limit = 20,
     CancellationToken cancellationToken = default)
     {
+        _http.ThrowIfDisposed();
+
         if (string.IsNullOrWhiteSpace(text))
             return Array.Empty<User>();
 

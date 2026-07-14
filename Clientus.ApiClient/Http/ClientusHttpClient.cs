@@ -11,10 +11,11 @@ namespace Clientus.ApiClient.Http;
 /// <summary>
 /// Provides HTTP communication with the Clientus API.
 /// </summary>
-public class ClientusHttpClient
+public class ClientusHttpClient : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly ClientusConfiguration _configuration;
+    private int _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClientusHttpClient"/> class.
@@ -99,10 +100,15 @@ public class ClientusHttpClient
     /// <exception cref="ApiException">
     /// Thrown when the API returns an unsuccessful HTTP status code.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when this instance has been disposed.
+    /// </exception>
     public async Task<T?> GetAsync<T>(
     string endpoint,
     CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
+
         using var response =
     await SendWithRetryAsync(
         () => _httpClient.GetAsync(endpoint, cancellationToken),
@@ -145,11 +151,16 @@ public class ClientusHttpClient
     /// <exception cref="ApiException">
     /// Thrown when the API returns an unsuccessful HTTP status code.
     /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when this instance has been disposed.
+    /// </exception>
     public async Task<T?> PostAsync<T>(
     string endpoint,
     object body,
     CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
+
         var json = JsonHelper.Serialize(body); ;
 
         using var content = new StringContent(
@@ -204,8 +215,13 @@ public class ClientusHttpClient
     /// <param name="accessToken">
     /// The access token, or <c>null</c> to clear the current authorization header.
     /// </param>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when this instance has been disposed.
+    /// </exception>
     public void SetAccessToken(string? accessToken)
     {
+        ThrowIfDisposed();
+
         _httpClient.DefaultRequestHeaders.Authorization = null;
 
         if (string.IsNullOrWhiteSpace(accessToken))
@@ -215,5 +231,21 @@ public class ClientusHttpClient
             new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Bearer",
                 accessToken);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 0)
+        {
+            _httpClient.Dispose();
+        }
+    }
+
+    internal void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(
+            Volatile.Read(ref _disposed) != 0,
+            this);
     }
 }

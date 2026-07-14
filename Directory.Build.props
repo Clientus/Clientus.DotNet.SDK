@@ -28,6 +28,16 @@
     <Copyright>Copyright © Clientus 2026</Copyright>
     <PackageIcon>icon.png</PackageIcon>
 
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+
+    <RepositoryUrl>https://github.com/Clientus/Clientus.DotNet.SDK</RepositoryUrl>
+
+    <RepositoryType>git</RepositoryType>
+
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
   </PropertyGroup>
 
 </Project>

@@ -2,15 +2,34 @@
 
 namespace Clientus.ApiClient.Customers;
 
+/// <summary>
+/// Provides operations for managing customers.
+/// </summary>
 public class CustomersService
 {
     private readonly ClientusHttpClient _http;
 
+    /// <summary>
+    /// Initializes a new instance of the CustomersService class.
+    /// </summary>
+    /// <param name="http">HTTP client used to communicate with Clientus.</param>
     public CustomersService(ClientusHttpClient http)
     {
         _http = http;
     }
 
+    /// <summary>
+    /// Retrieves customers.
+    /// </summary>
+    /// <param name="limit">
+    /// Maximum number of customers to return.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// A list of customers.
+    /// </returns>
     public async Task<IReadOnlyList<Customer>> GetAllAsync(
      int? limit = null,
      CancellationToken cancellationToken = default)
@@ -36,6 +55,18 @@ public class CustomersService
         return customers ?? new List<Customer>();
     }
 
+    /// <summary>
+    /// Retrieves a customer by its identifier.
+    /// </summary>
+    /// <param name="id">
+    /// Customer identifier.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// The customer if found; otherwise <c>null</c>.
+    /// </returns>
     public async Task<Customer?> GetByIdAsync(
     string id,
     CancellationToken cancellationToken = default)
@@ -59,6 +90,21 @@ public class CustomersService
         return result?.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Searches customers by name or email.
+    /// </summary>
+    /// <param name="text">
+    /// Search text.
+    /// </param>
+    /// <param name="limit">
+    /// Maximum number of results.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// Cancellation token.
+    /// </param>
+    /// <returns>
+    /// Matching customers.
+    /// </returns>
     public async Task<IReadOnlyList<Customer>> SearchAsync(
     string text,
     int limit = 20,

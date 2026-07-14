@@ -5,20 +5,44 @@ using Clientus.ApiClient.Http;
 
 namespace Clientus.ApiClient.Authentication;
 
+/// <summary>
+/// Provides authentication operations for the Clientus API.
+/// </summary>
 public class AuthService
 {
     private readonly ClientusHttpClient _http;
 
+    /// <summary>
+    /// Gets the current authenticated session.
+    /// Returns <see langword="null"/> when no user is authenticated.
+    /// </summary>
     public AuthSession? CurrentSession { get; private set; }
 
+
+    /// <summary>
+    /// Gets a value indicating whether a valid authenticated session is available.
+    /// </summary>
     public bool IsAuthenticated =>
         CurrentSession?.IsValid == true;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// </summary>
+    /// <param name="http">
+    /// HTTP client used to communicate with the Clientus API.
+    /// </param>
     public AuthService(ClientusHttpClient http)
     {
         _http = http;
     }
 
+
+    /// <summary>
+    /// Authenticates a user and creates a new session.
+    /// </summary>
+    /// <param name="request">Login request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The authentication response.</returns>
     public async Task<LoginResponse> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default)
@@ -136,6 +160,12 @@ public class AuthService
             RegexOptions.CultureInvariant);
     }
 
+    /// <summary>
+    /// Gets the currently authenticated user.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The current authenticated user, or <see langword="null"/> if no session exists.</returns>
+
     public async Task<AuthUser?> GetCurrentUserAsync(
     CancellationToken cancellationToken = default)
     {
@@ -146,6 +176,11 @@ public class AuthService
             "/auth/v1/user",
             cancellationToken);
     }
+
+    /// <summary>
+    /// Logs out the current user and clears the local session.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
 
     public async Task LogoutAsync(
     CancellationToken cancellationToken = default)

@@ -1,5 +1,8 @@
 ﻿namespace Clientus.ApiClient.Configuration;
 
+/// <summary>
+/// Represents the configuration used to connect to the Clientus API.
+/// </summary>
 public class ClientusConfiguration
 {
     /// <summary>

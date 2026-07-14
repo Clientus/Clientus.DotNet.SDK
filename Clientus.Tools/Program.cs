@@ -59,10 +59,6 @@ if (result.Success)
             Console.WriteLine($"Username: {profile.Username ?? "non disponibile"}");
             Console.WriteLine($"Tipo account: {profile.AccountType ?? "non disponibile"}");
             Console.WriteLine($"Stato account: {profile.AccountStatus ?? "non disponibile"}");
-            Console.WriteLine($"Nome: {profile.FullName ?? "non disponibile"}");
-            Console.WriteLine($"Username: {profile.Username ?? "non disponibile"}");
-            Console.WriteLine($"Tipo account: {profile.AccountType ?? "non disponibile"}");
-            Console.WriteLine($"Stato account: {profile.AccountStatus ?? "non disponibile"}");
             Console.WriteLine($"Stato approvazione: {profile.ApprovalStatus ?? "non disponibile"}");
             Console.WriteLine($"Demo: {(profile.DemoMode ? "Sì" : "No")}");
             Console.WriteLine($"Beta tester: {(profile.IsBetaTester ? "Sì" : "No")}");

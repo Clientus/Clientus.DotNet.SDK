@@ -14,7 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementi di soluzione", "Elementi di soluzione", "{B87E6046-9F66-4CDA-92AF-636963282E71}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
-		..\..\..\Users\ucbep\Desktop\clientus\icon.png = ..\..\..\Users\ucbep\Desktop\clientus\icon.png
+		icon.png = icon.png
 		README.md = README.md
 	EndProjectSection
 EndProject

@@ -6,8 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>a06342e8-ee79-4e1a-95bd-3b3bbce5c171</UserSecretsId>
-
-    <UserSecretsId>Clientus.Tools</UserSecretsId>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

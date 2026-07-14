@@ -48,6 +48,9 @@ public class AuthService
     /// <param name="request">Login request.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The authentication response.</returns>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when cancellation is requested through <paramref name="cancellationToken"/>.
+    /// </exception>
     public async Task<LoginResponse> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default)
@@ -123,6 +126,10 @@ public class AuthService
                 Session = session
             };
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (HttpRequestException exception)
         {
             return new LoginResponse
@@ -174,6 +181,9 @@ public class AuthService
     /// <returns>
     /// The refreshed authentication response.
     /// </returns>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when cancellation is requested through <paramref name="cancellationToken"/>.
+    /// </exception>
     public async Task<LoginResponse> RefreshAsync(
         CancellationToken cancellationToken = default)
     {
@@ -215,6 +225,10 @@ public class AuthService
                 Success = true,
                 Session = session
             };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (HttpRequestException exception)
         {

@@ -47,10 +47,15 @@ public class Result
     /// </param>
     /// <returns>A failed result.</returns>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="error"/> is empty.
+    /// Thrown when <paramref name="error"/> is <see langword="null"/>, empty, or consists only of white-space characters.
     /// </exception>
     public static Result Fail(string error)
     {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            throw new ArgumentException("The error message cannot be null, empty, or whitespace.", nameof(error));
+        }
+
         return new Result(false, error);
     }
 }

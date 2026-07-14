@@ -30,11 +30,17 @@ public class ClientusHttpClient
     /// </exception>
     public ClientusHttpClient(ClientusConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(configuration);
+
         if (string.IsNullOrWhiteSpace(configuration.BaseUrl))
-            throw new ArgumentException("BaseUrl non configurato.");
+            throw new ArgumentException(
+    "BaseUrl is not configured.",
+    nameof(configuration.BaseUrl));
 
         if (string.IsNullOrWhiteSpace(configuration.ApiKey))
-            throw new ArgumentException("ApiKey non configurata.");
+            throw new ArgumentException(
+    "ApiKey is not configured.",
+    nameof(configuration.ApiKey));
 
         _configuration = configuration;
 

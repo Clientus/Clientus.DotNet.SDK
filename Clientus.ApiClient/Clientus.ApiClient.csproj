@@ -26,7 +26,6 @@
     <Folder Include="Files\" />
     <Folder Include="Products\" />
     <Folder Include="WorkReports\" />
-    <Folder Include="Quotes\" />
   </ItemGroup>
 
   <ItemGroup>

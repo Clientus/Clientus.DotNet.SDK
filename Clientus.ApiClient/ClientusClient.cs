@@ -2,6 +2,7 @@
 using Clientus.ApiClient.Configuration;
 using Clientus.ApiClient.Customers;
 using Clientus.ApiClient.Http;
+using Clientus.ApiClient.Quotes;
 using Clientus.ApiClient.Users;
 
 
@@ -15,6 +16,7 @@ public class ClientusClient : IDisposable
     private readonly ClientusHttpClient _http;
     private readonly AuthService _auth;
     private readonly CustomersService _customers;
+    private readonly QuotesService _quotes;
     private readonly UserService _users;
     private int _disposed;
 
@@ -49,6 +51,22 @@ public class ClientusClient : IDisposable
     }
 
     /// <summary>
+    /// Gets the quotes service.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown when this instance has been disposed.
+    /// </exception>
+    public QuotesService Quotes
+    {
+        get
+        {
+            ThrowIfDisposed();
+            _quotes.ThrowIfDisposed();
+            return _quotes;
+        }
+    }
+
+    /// <summary>
     /// Gets the users service.
     /// </summary>
     /// <exception cref="ObjectDisposedException">
@@ -78,6 +96,7 @@ public class ClientusClient : IDisposable
 
         _auth = new AuthService(_http);
         _customers = new CustomersService(_http);
+        _quotes = new QuotesService(_http);
         _users = new UserService(_http);
     }
 

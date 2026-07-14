@@ -3,7 +3,7 @@
 namespace Clientus.ApiClient.Customers;
 
 /// <summary>
-/// Provides operations for managing customers.
+/// Provides authenticated customer operations whose visibility is controlled by row-level security.
 /// </summary>
 public class CustomersService
 {
@@ -13,8 +13,10 @@ public class CustomersService
     /// Initializes a new instance of the CustomersService class.
     /// </summary>
     /// <param name="http">HTTP client used to communicate with Clientus.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="http"/> is null.</exception>
     public CustomersService(ClientusHttpClient http)
     {
+        ArgumentNullException.ThrowIfNull(http);
         _http = http;
     }
 
@@ -57,7 +59,7 @@ public class CustomersService
                 endpoint,
                 cancellationToken);
 
-        return customers ?? new List<Customer>();
+        return PostgRestQuery.OrEmpty(customers);
     }
 
     /// <summary>
@@ -81,15 +83,10 @@ public class CustomersService
     {
         _http.ThrowIfDisposed();
 
-        if (string.IsNullOrWhiteSpace(id))
-            throw new ArgumentException(
-                "L'ID cliente è obbligatorio.",
-                nameof(id));
-
         var endpoint =
             "/rest/v1/clients" +
             "?select=*" +
-            $"&id=eq.{Uri.EscapeDataString(id)}" +
+            $"&{PostgRestQuery.ExactFilter("id", id, nameof(id))}" +
             "&limit=1";
 
         var result =
@@ -146,7 +143,7 @@ public class CustomersService
                 endpoint,
                 cancellationToken);
 
-        return customers ?? new List<Customer>();
+        return PostgRestQuery.OrEmpty(customers);
     }
 
     /// <summary>
@@ -180,16 +177,9 @@ public class CustomersService
         _http.ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(customer);
 
-        if (string.IsNullOrWhiteSpace(customer.Id))
-        {
-            throw new ArgumentException(
-                "Customer Id is required.",
-                nameof(customer));
-        }
-
         var endpoint =
             "/rest/v1/clients" +
-            $"?id=eq.{Uri.EscapeDataString(customer.Id)}" +
+            $"?{PostgRestQuery.ExactFilter("id", customer.Id, nameof(customer))}" +
             "&select=*";
 
         var updated = await _http.PatchAsync<List<Customer>>(
@@ -238,16 +228,9 @@ public class CustomersService
     {
         _http.ThrowIfDisposed();
 
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new ArgumentException(
-                "Customer Id is required.",
-                nameof(id));
-        }
-
         var endpoint =
             "/rest/v1/clients" +
-            $"?id=eq.{Uri.EscapeDataString(id)}";
+            $"?{PostgRestQuery.ExactFilter("id", id, nameof(id))}";
 
         await _http.DeleteAsync(endpoint, cancellationToken);
     }
@@ -276,17 +259,10 @@ public class CustomersService
     {
         _http.ThrowIfDisposed();
 
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new ArgumentException(
-                "Customer Id is required.",
-                nameof(id));
-        }
-
         var endpoint =
             "/rest/v1/clients" +
             "?select=id" +
-            $"&id=eq.{Uri.EscapeDataString(id)}" +
+            $"&{PostgRestQuery.ExactFilter("id", id, nameof(id))}" +
             "&limit=1";
 
         var matches = await _http.GetAsync<List<object>>(

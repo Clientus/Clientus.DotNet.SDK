@@ -9,12 +9,17 @@ using System.Net;
 namespace Clientus.ApiClient.Http;
 
 /// <summary>
-/// Provides HTTP communication with the Clientus API.
+/// Provides low-level HTTP communication, JSON serialization, cancellation, and the SDK retry policy.
 /// </summary>
+/// <remarks>
+/// GET, HEAD, and DELETE retry configured transient status codes. POST and PATCH are never retried.
+/// This type owns its underlying HTTP resources and must be disposed.
+/// </remarks>
 public class ClientusHttpClient : IDisposable
 {
     private readonly HttpClient _httpClient;
-    private readonly ClientusConfiguration _configuration;
+    private readonly int _maxRetryAttempts;
+    private readonly TimeSpan _initialRetryDelay;
     private int _disposed;
 
     /// <summary>
@@ -27,8 +32,12 @@ public class ClientusHttpClient : IDisposable
     /// Thrown when <paramref name="configuration"/> is null.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the base URL or API key is missing.
+    /// Thrown when the base URL is missing, invalid, or not HTTP/HTTPS, or when the API key is missing.
     /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when timeout or retry settings are outside their supported ranges.
+    /// </exception>
+    /// <remarks>The client owns and disposes its underlying <see cref="HttpClient"/>.</remarks>
     public ClientusHttpClient(ClientusConfiguration configuration)
         : this(configuration, null)
     {
@@ -42,21 +51,39 @@ public class ClientusHttpClient : IDisposable
 
         if (string.IsNullOrWhiteSpace(configuration.BaseUrl))
             throw new ArgumentException(
-    "BaseUrl is not configured.",
-    nameof(configuration.BaseUrl));
+                "BaseUrl is not configured.",
+                nameof(configuration.BaseUrl));
+
+        if (!Uri.TryCreate(configuration.BaseUrl, UriKind.Absolute, out var baseUri) ||
+            (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new ArgumentException(
+                "BaseUrl must be an absolute HTTP or HTTPS URL.",
+                nameof(configuration.BaseUrl));
+        }
 
         if (string.IsNullOrWhiteSpace(configuration.ApiKey))
             throw new ArgumentException(
-    "ApiKey is not configured.",
-    nameof(configuration.ApiKey));
+                "ApiKey is not configured.",
+                nameof(configuration.ApiKey));
 
-        _configuration = configuration;
+        if (configuration.Timeout != Timeout.InfiniteTimeSpan && configuration.Timeout <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(configuration.Timeout), "Timeout must be positive or infinite.");
+
+        if (configuration.MaxRetryAttempts < 1)
+            throw new ArgumentOutOfRangeException(nameof(configuration.MaxRetryAttempts), "At least one request attempt is required.");
+
+        if (configuration.InitialRetryDelay < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(configuration.InitialRetryDelay), "Retry delay cannot be negative.");
+
+        _maxRetryAttempts = configuration.MaxRetryAttempts;
+        _initialRetryDelay = configuration.InitialRetryDelay;
 
         _httpClient = handler is null
             ? new HttpClient()
             : new HttpClient(handler);
 
-        _httpClient.BaseAddress = new Uri(configuration.BaseUrl);
+        _httpClient.BaseAddress = baseUri;
         _httpClient.Timeout = configuration.Timeout;
 
         _httpClient.DefaultRequestHeaders.Add("apikey", configuration.ApiKey);
@@ -76,7 +103,7 @@ public class ClientusHttpClient : IDisposable
             if (response.IsSuccessStatusCode)
                 return response;
 
-            if (attempt >= _configuration.MaxRetryAttempts ||
+            if (attempt >= _maxRetryAttempts ||
                 !IsTransientStatusCode(response.StatusCode))
             {
                 return response;
@@ -116,6 +143,7 @@ public class ClientusHttpClient : IDisposable
     CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        ValidateEndpoint(endpoint);
 
         using var response =
     await SendWithRetryAsync(
@@ -168,8 +196,10 @@ public class ClientusHttpClient : IDisposable
     CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        ValidateEndpoint(endpoint);
+        ArgumentNullException.ThrowIfNull(body);
 
-        var json = JsonHelper.Serialize(body); ;
+        var json = JsonHelper.Serialize(body);
 
         using var content = new StringContent(
             json,
@@ -220,6 +250,8 @@ public class ClientusHttpClient : IDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        ValidateEndpoint(endpoint);
+        ArgumentNullException.ThrowIfNull(body);
 
         var json = JsonHelper.Serialize(body);
 
@@ -272,6 +304,7 @@ public class ClientusHttpClient : IDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        ValidateEndpoint(endpoint);
 
         using var response = await SendWithRetryAsync(
             () => _httpClient.DeleteAsync(endpoint, cancellationToken),
@@ -312,6 +345,7 @@ public class ClientusHttpClient : IDisposable
         CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+        ValidateEndpoint(endpoint);
 
         using var response = await SendWithRetryAsync(
             async () =>
@@ -352,9 +386,10 @@ public class ClientusHttpClient : IDisposable
 
     private TimeSpan GetRetryDelay(int attemptNumber)
     {
-        return TimeSpan.FromMilliseconds(
-            _configuration.InitialRetryDelay.TotalMilliseconds *
-            attemptNumber);
+        var milliseconds = Math.Min(
+            int.MaxValue,
+            _initialRetryDelay.TotalMilliseconds * attemptNumber);
+        return TimeSpan.FromMilliseconds(milliseconds);
     }
 
     /// <summary>
@@ -395,5 +430,13 @@ public class ClientusHttpClient : IDisposable
         ObjectDisposedException.ThrowIf(
             Volatile.Read(ref _disposed) != 0,
             this);
+    }
+
+    private static void ValidateEndpoint(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            throw new ArgumentException("An API endpoint is required.", nameof(endpoint));
+        }
     }
 }

@@ -30,6 +30,7 @@ using var client = new ClientusClient(new ClientusConfiguration
 
 - Authentication
 - Customers
+- Quotes (RLS-controlled reads, verified status transitions, and deletion)
 - Users
 
 More modules will be added in future releases.

@@ -8,15 +8,11 @@
     <Authors>Clientus</Authors>
     <Company>Clientus</Company>
 
-    <RepositoryType>git</RepositoryType>
-
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
     <NeutralLanguage>en</NeutralLanguage>
 
     <Deterministic>true</Deterministic>
-    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
-
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <DebugType>portable</DebugType>

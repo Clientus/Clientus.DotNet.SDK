@@ -9,8 +9,12 @@ using Clientus.ApiClient.Users;
 namespace Clientus.ApiClient;
 
 /// <summary>
-/// Provides the main entry point for accessing the Clientus API.
+/// Provides the main entry point for authenticated Clientus API services.
 /// </summary>
+/// <remarks>
+/// One shared HTTP transport is owned by this instance. Service properties return stable instances,
+/// and disposing this client disposes the shared transport exactly once.
+/// </remarks>
 public class ClientusClient : IDisposable
 {
     private readonly ClientusHttpClient _http;
@@ -90,6 +94,8 @@ public class ClientusClient : IDisposable
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="configuration"/> is null.
     /// </exception>
+    /// <exception cref="ArgumentException">Thrown when the base URL or API key is invalid.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when timeout or retry settings are invalid.</exception>
     public ClientusClient(ClientusConfiguration configuration)
     {
         _http = new ClientusHttpClient(configuration);
@@ -100,7 +106,7 @@ public class ClientusClient : IDisposable
         _users = new UserService(_http);
     }
 
-    /// <inheritdoc />
+    /// <summary>Disposes the shared HTTP transport. Repeated calls are safe.</summary>
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) == 0)

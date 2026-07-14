@@ -315,6 +315,10 @@ public class AuthService
                     new { },
                     cancellationToken);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch
             {
                 // Elimina comunque la sessione locale.

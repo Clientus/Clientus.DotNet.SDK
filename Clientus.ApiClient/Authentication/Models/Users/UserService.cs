@@ -54,19 +54,10 @@ public class UserService
     {
         _http.ThrowIfDisposed();
 
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            throw new ArgumentException(
-                "User Id is required.",
-                nameof(userId));
-        }
-
-        var encodedUserId = Uri.EscapeDataString(userId);
-
         var endpoint =
     "/rest/v1/profiles" +
     "?select=user_id,username,full_name,avatar_url,account_type,account_status,approval_status,demo_mode,is_beta_tester,created_at,updated_at" +
-    $"&user_id=eq.{encodedUserId}" +
+    $"&{PostgRestQuery.ExactFilter("user_id", userId, nameof(userId))}" +
     "&limit=1";
 
         var users = await _http.GetAsync<List<User>>(
@@ -128,6 +119,6 @@ public class UserService
             endpoint,
             cancellationToken);
 
-        return users ?? new List<User>();
+        return PostgRestQuery.OrEmpty(users);
     }
 }

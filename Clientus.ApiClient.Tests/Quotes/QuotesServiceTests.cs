@@ -75,6 +75,25 @@ public sealed class QuotesServiceTests
     }
 
     [Fact]
+    public void Enums_RejectUnknownStringsAndAllowNullableNulls()
+    {
+        Assert.Throws<JsonException>(() => JsonHelper.Deserialize<QuoteStatus>("\"future\""));
+        Assert.Null(JsonHelper.Deserialize<QuoteStatus?>("null"));
+        Assert.Null(JsonHelper.Deserialize<QuoteDiscountKind?>("null"));
+    }
+
+    [Fact]
+    public void QuoteWithItems_TakesReadOnlySnapshot()
+    {
+        var source = new List<QuoteItem> { new() { Id = "first" } };
+        var result = new QuoteWithItems(new Quote { Id = "q1" }, source);
+        source.Add(new QuoteItem { Id = "second" });
+
+        Assert.Single(result.Items);
+        Assert.Equal("first", result.Items[0].Id);
+    }
+
+    [Fact]
     public async Task GetAsync_UsesExactEscapedIdAndReturnsVisibleQuote()
     {
         using var fixture = CreateFixture(JsonResponse("[{\"id\":\"a/b c\",\"status\":\"draft\"}]"));

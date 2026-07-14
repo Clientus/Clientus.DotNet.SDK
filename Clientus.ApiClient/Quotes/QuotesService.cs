@@ -35,14 +35,19 @@ public class QuotesService
     }
 
     /// <summary>Gets one RLS-visible quote by exact identifier.</summary>
+    /// <param name="id">The quote identifier.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The visible quote, or <see langword="null"/>.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is empty or whitespace.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the underlying client is disposed.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
     public async Task<Quote?> GetAsync(string id, CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
         ValidateId(id);
 
         var rows = await _http.GetAsync<List<Quote>>(
-            $"/rest/v1/quotes?select={QuoteFields}&id=eq.{Escape(id)}&limit=1",
+            $"/rest/v1/quotes?select={QuoteFields}&{ExactId(id)}&limit=1",
             cancellationToken);
         return rows?.FirstOrDefault();
     }
@@ -50,7 +55,12 @@ public class QuotesService
     /// <summary>
     /// Gets one RLS-visible quote and loads its RLS-visible items in ascending position order.
     /// </summary>
+    /// <param name="id">The quote identifier.</param>
+    /// <param name="cancellationToken">A token used to cancel either request.</param>
     /// <returns>The quote and items, or <see langword="null"/> when the quote is not visible.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is empty or whitespace.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the underlying client is disposed.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
     public async Task<QuoteWithItems?> GetWithItemsAsync(
         string id,
         CancellationToken cancellationToken = default)
@@ -62,33 +72,44 @@ public class QuotesService
         }
 
         var items = await _http.GetAsync<List<QuoteItem>>(
-            $"/rest/v1/quote_items?select={QuoteItemFields}&quote_id=eq.{Escape(id)}&order=position.asc",
+            $"/rest/v1/quote_items?select={QuoteItemFields}&{PostgRestQuery.ExactFilter("quote_id", id, nameof(id))}&order=position.asc",
             cancellationToken);
         return new QuoteWithItems(quote, items ?? []);
     }
 
     /// <summary>Lists every quote visible through RLS, newest creation first.</summary>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>A read-only list of visible quotes.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown when the underlying client is disposed.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
     public async Task<IReadOnlyList<Quote>> ListAsync(CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
         var rows = await _http.GetAsync<List<Quote>>(
             $"/rest/v1/quotes?select={QuoteFields}&order=created_at.desc",
             cancellationToken);
-        return rows ?? [];
+        return PostgRestQuery.OrEmpty(rows);
     }
 
     /// <summary>Determines whether an exact quote identifier is visible through RLS.</summary>
+    /// <param name="id">The quote identifier.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns><see langword="true"/> when a visible quote exists; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is empty or whitespace.</exception>
     public async Task<bool> ExistsAsync(string id, CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
         ValidateId(id);
         var rows = await _http.GetAsync<List<QuoteIdentity>>(
-            $"/rest/v1/quotes?select=id&id=eq.{Escape(id)}&limit=1",
+            $"/rest/v1/quotes?select=id&{ExactId(id)}&limit=1",
             cancellationToken);
         return rows?.Count > 0;
     }
 
     /// <summary>Gets the exact number of quotes visible through RLS.</summary>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>The exact RLS-visible total.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when PostgREST omits a valid exact count.</exception>
     public Task<long> CountAsync(CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
@@ -104,6 +125,13 @@ public class QuotesService
     /// accepted/rejected/expired/draft; and expired to sent. Accepted and rejected are terminal.
     /// A same-state request performs no PATCH.
     /// </remarks>
+    /// <param name="id">The quote identifier.</param>
+    /// <param name="targetStatus">The verified target status.</param>
+    /// <param name="cancellationToken">A token used to cancel the read or patch.</param>
+    /// <returns>The current quote for a no-op, or the representation returned by the update.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is empty or whitespace.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="targetStatus"/> is undefined.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the quote is unavailable, the transition is forbidden, or no representation is returned.</exception>
     public async Task<Quote> UpdateStatusAsync(
         string id,
         QuoteStatus targetStatus,
@@ -140,7 +168,7 @@ public class QuotesService
         };
 
         var rows = await _http.PatchAsync<List<Quote>>(
-            $"/rest/v1/quotes?select={QuoteFields}&id=eq.{Escape(id)}&company_id=eq.{Escape(current.CompanyId)}",
+            $"/rest/v1/quotes?select={QuoteFields}&{ExactId(id)}&{PostgRestQuery.ExactFilter("company_id", current.CompanyId, nameof(current.CompanyId))}",
             patch,
             cancellationToken);
         return rows?.SingleOrDefault()
@@ -152,11 +180,15 @@ public class QuotesService
     /// null. Quote-linked <c>company_documents</c> rows and storage objects do not cascade and are
     /// neither deleted nor claimed to be deleted by this operation.
     /// </summary>
+    /// <param name="id">The quote identifier.</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>A task representing deletion.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is empty or whitespace.</exception>
     public Task DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
         ValidateId(id);
-        return _http.DeleteAsync($"/rest/v1/quotes?id=eq.{Escape(id)}", cancellationToken);
+        return _http.DeleteAsync($"/rest/v1/quotes?{ExactId(id)}", cancellationToken);
     }
 
     internal void ThrowIfDisposed() => _http.ThrowIfDisposed();
@@ -170,14 +202,11 @@ public class QuotesService
         _ => false
     };
 
-    private static string Escape(string value) => Uri.EscapeDataString(value);
+    private static string ExactId(string id) => PostgRestQuery.ExactFilter("id", id, nameof(id));
 
     private static void ValidateId(string id)
     {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            throw new ArgumentException("Quote Id is required.", nameof(id));
-        }
+        PostgRestQuery.ValidateIdentifier(id, nameof(id));
     }
 
     private sealed class QuoteIdentity

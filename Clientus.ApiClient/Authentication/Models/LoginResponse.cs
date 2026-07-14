@@ -1,10 +1,22 @@
 ﻿namespace Clientus.ApiClient.Authentication.Models;
 
+/// <summary>
+/// Represents the result of a Clientus authentication attempt.
+/// </summary>
 public class LoginResponse
 {
-    public bool Success { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether authentication succeeded.
+    /// </summary>
+    public bool Success { get; init; }
 
-    public string? Error { get; set; }
+    /// <summary>
+    /// Gets or sets the authentication error message.
+    /// </summary>
+    public string? Error { get; init; }
 
-    public AuthSession? Session { get; set; }
+    /// <summary>
+    /// Gets or sets the authenticated session.
+    /// </summary>
+    public AuthSession? Session { get; init; }
 }

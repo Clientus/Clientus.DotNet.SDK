@@ -6,32 +6,32 @@
 public class ClientusConfiguration
 {
     /// <summary>
-    /// URL del backend Clientus
-    /// Es: https://xxxx.supabase.co
+    /// Gets or sets the Clientus backend base URL.
+    /// Example:
+    /// https://your-project.supabase.co
     /// </summary>
     public string BaseUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Chiave pubblica (anon key)
-    /// Mai usare la Service Role Key nel client.
+    /// Gets or sets the public API key (Anon Key).
+    /// Never use the Service Role Key in client applications.
     /// </summary>
     public string ApiKey { get; set; } = string.Empty;
 
     /// <summary>
-    /// Timeout delle richieste HTTP.
+    /// Gets or sets the HTTP request timeout.
     /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Numero massimo di tentativi per errori temporanei.
-    /// Il valore include il primo tentativo.
+    /// Gets or sets the maximum number of retry attempts for transient failures.
+    /// The value includes the initial request.
     /// </summary>
     public int MaxRetryAttempts { get; set; } = 3;
 
     /// <summary>
-    /// Attesa iniziale tra un tentativo e il successivo.
-    /// L'attesa aumenta progressivamente.
+    /// Gets or sets the initial delay between retry attempts.
+    /// The delay increases progressively for each retry.
     /// </summary>
-    public TimeSpan RetryBaseDelay { get; set; } =
-        TimeSpan.FromMilliseconds(500);
+    public TimeSpan InitialRetryDelay { get; set; } = TimeSpan.FromMilliseconds(500);
 }

@@ -194,7 +194,7 @@ public class ClientusHttpClient
     private TimeSpan GetRetryDelay(int attemptNumber)
     {
         return TimeSpan.FromMilliseconds(
-            _configuration.RetryBaseDelay.TotalMilliseconds *
+            _configuration.InitialRetryDelay.TotalMilliseconds *
             attemptNumber);
     }
 

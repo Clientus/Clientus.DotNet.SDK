@@ -31,8 +31,13 @@ public class AuthService
     /// <param name="http">
     /// HTTP client used to communicate with the Clientus API.
     /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="http"/> is <see langword="null"/>.
+    /// </exception>
     public AuthService(ClientusHttpClient http)
     {
+        ArgumentNullException.ThrowIfNull(http);
+
         _http = http;
     }
 
@@ -52,7 +57,7 @@ public class AuthService
             return new LoginResponse
             {
                 Success = false,
-                Error = "Richiesta di accesso non valida."
+                Error = "Invalid access request."
             };
         }
 
@@ -63,7 +68,7 @@ public class AuthService
             return new LoginResponse
             {
                 Success = false,
-                Error = "Inserisci username o email."
+                Error = "Username or email is required."
             };
         }
 
@@ -72,7 +77,7 @@ public class AuthService
             return new LoginResponse
             {
                 Success = false,
-                Error = "Inserisci la password."
+                Error = "Password is required."
             };
         }
 
@@ -87,7 +92,7 @@ public class AuthService
                 return new LoginResponse
                 {
                     Success = false,
-                    Error = "Username o email non trovati."
+                    Error = "Username or email was not found."
                 };
             }
 
@@ -105,7 +110,7 @@ public class AuthService
                 return new LoginResponse
                 {
                     Success = false,
-                    Error = "Il server non ha restituito una sessione valida."
+                    Error = "Server did not return a valid session."
                 };
             }
 
@@ -123,7 +128,7 @@ public class AuthService
             return new LoginResponse
             {
                 Success = false,
-                Error = $"Accesso non riuscito: {exception.Message}"
+                Error = $"Authentication failed: {exception.Message}"
             };
         }
         catch (Exception exception)
@@ -131,7 +136,7 @@ public class AuthService
             return new LoginResponse
             {
                 Success = false,
-                Error = $"Errore imprevisto durante l'accesso: {exception.Message}"
+                Error = $"Unexpected error during authentication: {exception.Message}"
             };
         }
     }
@@ -160,12 +165,80 @@ public class AuthService
             RegexOptions.CultureInvariant);
     }
 
+    
+
+    /// <summary>
+    /// Refreshes the current authenticated session using its refresh token.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>
+    /// The refreshed authentication response.
+    /// </returns>
+    public async Task<LoginResponse> RefreshAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var refreshToken = CurrentSession?.RefreshToken?.Trim();
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return new LoginResponse
+            {
+                Success = false,
+                Error = "No refresh token is available."
+            };
+        }
+
+        try
+        {
+            var session = await _http.PostAsync<AuthSession>(
+                "/auth/v1/token?grant_type=refresh_token",
+                new
+                {
+                    refresh_token = refreshToken
+                },
+                cancellationToken);
+
+            if (session?.IsValid != true)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Error = "The server did not return a valid session."
+                };
+            }
+
+            CurrentSession = session;
+            _http.SetAccessToken(session.AccessToken);
+
+            return new LoginResponse
+            {
+                Success = true,
+                Session = session
+            };
+        }
+        catch (HttpRequestException exception)
+        {
+            return new LoginResponse
+            {
+                Success = false,
+                Error = $"Session update failed: {exception.Message}"
+            };
+        }
+        catch (Exception exception)
+        {
+            return new LoginResponse
+            {
+                Success = false,
+                Error = $"Unexpected error while updating the session: {exception.Message}"
+            };
+        }
+    }
+
     /// <summary>
     /// Gets the currently authenticated user.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The current authenticated user, or <see langword="null"/> if no session exists.</returns>
-
     public async Task<AuthUser?> GetCurrentUserAsync(
     CancellationToken cancellationToken = default)
     {

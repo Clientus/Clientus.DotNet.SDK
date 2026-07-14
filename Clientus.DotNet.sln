@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementi di soluzione", "El
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clientus.ApiClient.Tests", "Clientus.ApiClient.Tests\Clientus.ApiClient.Tests.csproj", "{641B214E-8BA8-45E0-8320-D42B0FA50DEC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{98BC93F4-C3B4-40EF-A2D5-C67209D39527}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98BC93F4-C3B4-40EF-A2D5-C67209D39527}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98BC93F4-C3B4-40EF-A2D5-C67209D39527}.Release|Any CPU.Build.0 = Release|Any CPU
+		{641B214E-8BA8-45E0-8320-D42B0FA50DEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{641B214E-8BA8-45E0-8320-D42B0FA50DEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{641B214E-8BA8-45E0-8320-D42B0FA50DEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{641B214E-8BA8-45E0-8320-D42B0FA50DEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

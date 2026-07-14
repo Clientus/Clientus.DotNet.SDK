@@ -30,6 +30,13 @@ public class ClientusHttpClient : IDisposable
     /// Thrown when the base URL or API key is missing.
     /// </exception>
     public ClientusHttpClient(ClientusConfiguration configuration)
+        : this(configuration, null)
+    {
+    }
+
+    internal ClientusHttpClient(
+        ClientusConfiguration configuration,
+        HttpMessageHandler? handler)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -45,11 +52,12 @@ public class ClientusHttpClient : IDisposable
 
         _configuration = configuration;
 
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri(configuration.BaseUrl),
-            Timeout = configuration.Timeout
-        };
+        _httpClient = handler is null
+            ? new HttpClient()
+            : new HttpClient(handler);
+
+        _httpClient.BaseAddress = new Uri(configuration.BaseUrl);
+        _httpClient.Timeout = configuration.Timeout;
 
         _httpClient.DefaultRequestHeaders.Add("apikey", configuration.ApiKey);
     }

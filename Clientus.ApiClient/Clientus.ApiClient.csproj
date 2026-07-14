@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>true</IsPackable>
+
+    <PackageId>Clientus.ApiClient</PackageId>
+    <Title>Clientus .NET API Client</Title>
+
+    <Description>Official .NET client for authentication and access to the Clientus platform.</Description>
+
+    <PackageTags>clientus;sdk;dotnet;api;http;crm</PackageTags>
+
+    <PackageReleaseNotes>First beta release of the Clientus .NET API client.</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Clientus.Core\Clientus.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Invoices\" />
+    <Folder Include="Files\" />
+    <Folder Include="Products\" />
+    <Folder Include="WorkReports\" />
+    <Folder Include="Quotes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md"
+          Pack="true"
+          PackagePath="\" />
+
+    <None Include="..\icon.png"
+      Pack="true"
+      PackagePath="\" />
+  </ItemGroup>
+  
+</Project>

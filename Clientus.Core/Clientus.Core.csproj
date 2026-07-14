@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>true</IsPackable>
+
+    <PackageId>Clientus.Core</PackageId>
+
+    <Title>Clientus Core</Title>
+
+    <Description>Shared models, results and exceptions for the official Clientus .NET SDK.</Description>
+
+    <PackageTags>clientus;sdk;dotnet;api;core</PackageTags>
+
+    <PackageReleaseNotes>First beta release.</PackageReleaseNotes>
+  </PropertyGroup>
+
+  
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Configuration\" />
+    <Folder Include="Validation\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="..\README.md"
+          Pack="true"
+          PackagePath="\" />
+
+    <None Include="..\icon.png"
+      Pack="true"
+      PackagePath="\" />
+  </ItemGroup>
+  
+</Project>

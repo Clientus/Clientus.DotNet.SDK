@@ -1,9 +1,10 @@
 using System.Text.Json.Serialization;
+using Clientus.ApiClient.Serialization;
 
 namespace Clientus.ApiClient.Quotes;
 
 /// <summary>Identifies the verified quote discount calculation kind.</summary>
-[JsonConverter(typeof(QuoteEnumJsonConverter<QuoteDiscountKind>))]
+[JsonConverter(typeof(LowercaseEnumJsonConverter<QuoteDiscountKind>))]
 public enum QuoteDiscountKind
 {
     /// <summary>No discount.</summary>

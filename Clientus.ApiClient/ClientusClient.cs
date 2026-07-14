@@ -2,6 +2,7 @@
 using Clientus.ApiClient.Configuration;
 using Clientus.ApiClient.Customers;
 using Clientus.ApiClient.Http;
+using Clientus.ApiClient.Invoices;
 using Clientus.ApiClient.Quotes;
 using Clientus.ApiClient.Users;
 
@@ -21,6 +22,7 @@ public class ClientusClient : IDisposable
     private readonly AuthService _auth;
     private readonly CustomersService _customers;
     private readonly QuotesService _quotes;
+    private readonly InvoicesService _invoices;
     private readonly UserService _users;
     private int _disposed;
 
@@ -70,6 +72,18 @@ public class ClientusClient : IDisposable
         }
     }
 
+    /// <summary>Gets the authenticated, RLS-controlled invoices service.</summary>
+    /// <exception cref="ObjectDisposedException">Thrown when this instance has been disposed.</exception>
+    public InvoicesService Invoices
+    {
+        get
+        {
+            ThrowIfDisposed();
+            _invoices.ThrowIfDisposed();
+            return _invoices;
+        }
+    }
+
     /// <summary>
     /// Gets the users service.
     /// </summary>
@@ -103,6 +117,7 @@ public class ClientusClient : IDisposable
         _auth = new AuthService(_http);
         _customers = new CustomersService(_http);
         _quotes = new QuotesService(_http);
+        _invoices = new InvoicesService(_http);
         _users = new UserService(_http);
     }
 

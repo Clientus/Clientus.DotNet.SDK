@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Invoices\" />
     <Folder Include="Files\" />
     <Folder Include="Products\" />
     <Folder Include="WorkReports\" />

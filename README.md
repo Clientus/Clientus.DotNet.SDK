@@ -31,6 +31,7 @@ using var client = new ClientusClient(new ClientusConfiguration
 - Authentication
 - Customers
 - Quotes (RLS-controlled reads, verified status transitions, and deletion)
+- Invoices (RLS-controlled reads and deletion; orchestrated workflows intentionally excluded)
 - Users
 
 More modules will be added in future releases.

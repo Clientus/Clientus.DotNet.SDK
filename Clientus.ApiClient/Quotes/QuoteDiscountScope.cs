@@ -1,9 +1,10 @@
 using System.Text.Json.Serialization;
+using Clientus.ApiClient.Serialization;
 
 namespace Clientus.ApiClient.Quotes;
 
 /// <summary>Identifies which verified quote line categories receive a discount.</summary>
-[JsonConverter(typeof(QuoteEnumJsonConverter<QuoteDiscountScope>))]
+[JsonConverter(typeof(LowercaseEnumJsonConverter<QuoteDiscountScope>))]
 public enum QuoteDiscountScope
 {
     /// <summary>All quote lines.</summary>

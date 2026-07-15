@@ -7,6 +7,8 @@ This is the concise public roadmap. Detailed contract and blocker status lives i
 
 - Core configuration, HTTP, authentication/session, serialization, retry, error, cancellation, and
   lifecycle foundation.
+- Catalog: RLS item/category reads, type filtering, bounded search, supported-field update,
+  existence/count, and deletion.
 - Customers: reads, search, supported-field update, existence/count, and deletion.
 - Quotes: reads, ordered items, existence/count, verified status transitions, and deletion.
 - Invoices: reads, ordered items, existence/count, and deletion.
@@ -14,8 +16,8 @@ This is the concise public roadmap. Detailed contract and blocker status lives i
 
 ## Recommended next module
 
-Catalog is the next contract-audit candidate because Quotes and Invoices reference catalog item
-snapshots. Read operations should be verified before any mutations are considered.
+Work Reports are the next contract-audit candidate because their Catalog dependencies and
+invoice-conversion boundary are now identified. Safe reads should be verified first.
 
 ## Later contract audits
 
@@ -28,7 +30,8 @@ snapshots. Read operations should be verified before any mutations are considere
 
 ## Server-orchestrated blockers
 
-Current SDK services intentionally do not approximate quote/invoice creation, numbering, conversion,
+Current SDK services intentionally do not approximate catalog creation/category workflows,
+quote/invoice creation, numbering, conversion,
 payments, QR Bill/IBAN logic, deposits, installment generation, public documents, attachment
 mutation, PDF generation, or delivery workflows. These require verified server APIs and side effects.
 

@@ -3,6 +3,32 @@
 This reference lists only operations implemented by the current public SDK. Every domain operation
 uses the shared authenticated transport and remains subject to Supabase row-level security.
 
+## Catalog
+
+Supported:
+
+- `GetAsync(string id, CancellationToken cancellationToken = default)`
+- `ListAsync(CancellationToken cancellationToken = default)`
+- `GetByTypeAsync(CatalogItemType type, CancellationToken cancellationToken = default)`
+- `SearchAsync(string text, int limit = 20, CatalogItemType? type = null, CancellationToken cancellationToken = default)`
+- `ListCategoriesAsync(CancellationToken cancellationToken = default)`
+- `ExistsAsync`, `CountAsync`, `UpdateAsync`, and `DeleteAsync`
+
+Lists order by kind and name. Type-filtered and search results order by name. Search performs the
+verified case-insensitive contains query across name, description, and legacy category text, accepts
+an optional item kind, and permits limits from 1 through 50. Categories order by `sort_order` and name.
+
+`UpdateAsync` sends kind, name, description, legacy category, category ID, unit, price, photo URL,
+price tax mode, and VAT rate. It never writes ID, company ID, creator, or timestamps. Owner-or-creator
+RLS policies authorize updates and deletes.
+
+Deleting an item sets verified quote-item, invoice-item, appointment, and work-report travel
+references to null. Historical document-line pricing and VAT snapshots remain.
+
+Not exposed: creation, category mutation/reordering/deletion, active behavior, stock/inventory,
+travel-zone/rate workflows, imports, or server picker calculations. Creation is server-only because
+it resolves or creates the caller's company and injects `company_id` and `created_by`.
+
 ## Customers
 
 Supported:

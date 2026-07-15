@@ -2,7 +2,7 @@
 
 The official .NET SDK for authenticated access to the Clientus platform. The current beta provides
 the HTTP, configuration, authentication, tenancy, serialization, retry, and lifecycle foundation,
-plus supported operations for Customers, Quotes, and Invoices.
+plus supported operations for Catalog, Customers, Quotes, and Invoices.
 
 ## Current status
 
@@ -66,11 +66,39 @@ var currentUser = await client.Auth.GetCurrentUserAsync();
 using var source = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
 var customers = await client.Customers.GetAllAsync(cancellationToken: source.Token);
+var catalogItems = await client.Catalog.ListAsync(source.Token);
 var quotes = await client.Quotes.ListAsync(source.Token);
 var invoices = await client.Invoices.ListAsync(source.Token);
 ```
 
 Every service operation accepts an optional `CancellationToken` as its final argument.
+
+## Catalog examples
+
+```csharp
+using Clientus.ApiClient.Catalog;
+
+var item = await client.Catalog.GetAsync(itemId, cancellationToken);
+var items = await client.Catalog.ListAsync(cancellationToken);
+var products = await client.Catalog.GetByTypeAsync(CatalogItemType.Product, cancellationToken);
+var matches = await client.Catalog.SearchAsync(
+    "valve", limit: 20, type: CatalogItemType.Product, cancellationToken: cancellationToken);
+var categories = await client.Catalog.ListCategoriesAsync(cancellationToken);
+var exists = await client.Catalog.ExistsAsync(itemId, cancellationToken);
+var count = await client.Catalog.CountAsync(cancellationToken);
+
+if (item is not null)
+{
+    item.Price = 12.50m;
+    item = await client.Catalog.UpdateAsync(item, cancellationToken);
+}
+
+await client.Catalog.DeleteAsync(itemId, cancellationToken);
+```
+
+Creation is not exposed because the verified server workflow resolves or creates the company and
+supplies protected tenant and creator fields. Catalog items have no verified active, inventory, or
+stock field.
 
 ## Customers examples
 
@@ -176,7 +204,7 @@ Validation uses standard .NET exceptions. Successful count responses without a v
 
 ## Disposal and lifecycle
 
-`ClientusClient` owns one shared HTTP transport. `Auth`, `Customers`, `Quotes`, `Invoices`, and
+`ClientusClient` owns one shared HTTP transport. `Auth`, `Catalog`, `Customers`, `Quotes`, `Invoices`, and
 `Users` return stable service instances. Dispose the parent client with `using`; the SDK implements
 `IDisposable`, not `IAsyncDisposable`. Access after disposal throws `ObjectDisposedException`.
 
@@ -185,6 +213,7 @@ Validation uses standard .NET exceptions. Successful count responses without a v
 | Module | Supported operations |
 |---|---|
 | Authentication | `LoginAsync`, `RefreshAsync`, `GetCurrentUserAsync`, `LogoutAsync` |
+| Catalog | `GetAsync`, `ListAsync`, `GetByTypeAsync`, `SearchAsync`, `ListCategoriesAsync`, `ExistsAsync`, `CountAsync`, `UpdateAsync`, `DeleteAsync` |
 | Customers | `GetAllAsync`, `GetByIdAsync`, `SearchAsync`, `UpdateAsync`, `DeleteAsync`, `ExistsAsync`, `CountAsync` |
 | Quotes | `GetAsync`, `GetWithItemsAsync`, `ListAsync`, `ExistsAsync`, `CountAsync`, `UpdateStatusAsync`, `DeleteAsync` |
 | Invoices | `GetAsync`, `GetWithItemsAsync`, `ListAsync`, `ExistsAsync`, `CountAsync`, `DeleteAsync` |
@@ -192,7 +221,8 @@ Validation uses standard .NET exceptions. Successful count responses without a v
 
 ## Intentionally unavailable operations
 
-The SDK does not expose customer creation; quote creation or generic editing; invoice creation,
+The SDK does not expose catalog creation, category mutation, active/stock/inventory operations;
+customer creation; quote creation or generic editing; invoice creation,
 editing, or status mutation; quote/work-report conversion; numbering; payments; QR Bill/IBAN
 generation; deposits; installment generation; public-token flows; attachment mutation; PDF/document
 generation; or email sending. These require contracts or server orchestration not represented by the

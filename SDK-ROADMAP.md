@@ -11,7 +11,7 @@ server orchestration or privilege and must not be approximated with direct datab
 | Customers | Verified for exposed operations | Reads, search, supported-field update, exists/count, delete | Complete | Creation and proposed workflows require verification |
 | Quotes | Verified | RLS reads/count/exists/items, verified status transitions, delete | Complete | Creation, conversion, public token, attachments, item/content editing are blocked |
 | Invoices | Verified | RLS reads/count/exists/items and delete | Complete | Creation/editing/status, numbering, conversions, QR/IBAN, deposits, installments, payments, public documents, email and PDFs are orchestrated |
-| Catalog | Not yet audited | Not implemented | None | Verify pricing/VAT, barcode, stock, search, and mutations |
+| Catalog | Verified | RLS item/category reads, bounded search/type filter, exists/count, supported-field update, delete | Complete | Creation, category mutations, company rates, imports, and picker calculations are server workflows; no stock/active contract exists |
 | Work Reports | Not yet audited | Not implemented | None | Verify reads; creation and conversion require workflow analysis |
 | Agenda | Not yet audited | Not implemented | None | Verify appointments, recurrence, availability, and notifications |
 | Payments | Invoice integration verified only | Not implemented | None | Recording, matching, Stripe, and bank imports are trigger/server workflows |
@@ -35,5 +35,5 @@ server orchestration or privilege and must not be approximated with direct datab
 
 ## Recommended next module
 
-Catalog is next because quote and invoice line snapshots reference catalog items. Audit the backend
-contract first and expose safe reads before considering mutations.
+Work Reports are next because their Catalog dependencies and invoice-conversion boundary are now
+known. Begin with a backend audit and expose safe reads before orchestrated workflows.

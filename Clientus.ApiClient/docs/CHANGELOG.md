@@ -14,6 +14,19 @@ entry; the repository currently verifies local package generation.
 - Reconciled examples, package instructions, retry behavior, and unavailable operations with the
   actual public API.
 
+### Added
+
+- Added typed Catalog item/category models and verified enums.
+- Added RLS-controlled catalog item/category reads, bounded search/type filters, existence/count,
+  supported-field update, and deletion.
+- Added deterministic Catalog serialization, query, retry, mutation, cancellation, error, and
+  lifecycle coverage, bringing the suite to 176 passing tests.
+
+### Security
+
+- Kept catalog creation and category/server workflows unavailable because company and creator
+  assignment is orchestrated by the authenticated backend.
+
 ## 1.0.0-beta.1
 
 ### Added

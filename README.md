@@ -1,16 +1,35 @@
-# Clientus .NET SDK
+# Clientus SDK for .NET
 
-The official .NET SDK for authenticated access to the Clientus platform. The current beta provides
-the HTTP, configuration, authentication, tenancy, serialization, retry, and lifecycle foundation,
-plus supported operations for Catalog, Customers, Quotes, and Invoices.
+The official Clientus SDK for developers building integrations and solutions connected to the
+Clientus ecosystem. The current beta provides authenticated, RLS-controlled access through the
+verified Clientus backend contracts.
 
 ## Current status
 
-Version `1.0.0-beta.1` is defined in `Directory.Build.props`. The SDK targets .NET 8 (`net8.0`).
+| | |
+|---|---|
+| Version | Beta (`1.0.0-beta.1`) |
+| First release | 14 July 2026 |
+| Target framework | .NET 8 (`net8.0`) |
+
 Local NuGet package generation is supported. Public NuGet distribution has not been verified and is
 planned for a later release.
 
+## Available features
+
+- **Clientus client:** validated configuration, shared HTTP transport, bearer authentication,
+  retries for safe requests, cancellation, error handling, and deterministic disposal.
+- **Authentication:** login, session refresh, current authenticated user, and logout.
+- **Customers:** customer listing, search, details, update of verified fields, existence, count, and
+  deletion.
+- **Users:** current profile lookup by authenticated user identifier and profile search.
+- **Catalog:** verified reads, search, categories, update, existence, count, and deletion.
+- **Quotes:** reads with line items, status transitions, existence, count, and deletion.
+- **Invoices:** reads with line items, existence, count, and deletion.
+
 ## Installation
+
+NuGet public distribution: **Coming soon**.
 
 Until a public package is announced, build a local package:
 
@@ -63,12 +82,26 @@ var currentUser = await client.Auth.GetCurrentUserAsync();
 ## Quick start
 
 ```csharp
-using var source = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+using Clientus.ApiClient;
+using Clientus.ApiClient.Authentication.Models;
+using Clientus.ApiClient.Configuration;
 
-var customers = await client.Customers.GetAllAsync(cancellationToken: source.Token);
-var catalogItems = await client.Catalog.ListAsync(source.Token);
-var quotes = await client.Quotes.ListAsync(source.Token);
-var invoices = await client.Invoices.ListAsync(source.Token);
+using var client = new ClientusClient(new ClientusConfiguration
+{
+    BaseUrl = "https://your-clientus-backend.example",
+    ApiKey = "your-supabase-publishable-key"
+});
+
+var login = await client.Auth.LoginAsync(new LoginRequest
+{
+    Identifier = "developer@example.com",
+    Password = "your-password"
+});
+
+if (!login.Success)
+    throw new InvalidOperationException(login.Error);
+
+var customers = await client.Customers.GetAllAsync();
 ```
 
 Every service operation accepts an optional `CancellationToken` as its final argument.
@@ -261,6 +294,14 @@ handlers and does not require live credentials or external services.
 - [Module reference](Clientus.ApiClient/docs/MODULES.md)
 - [Public roadmap](Clientus.ApiClient/docs/ROADMAP.md)
 - [Detailed engineering roadmap](SDK-ROADMAP.md)
+- [Basic console example](examples/BasicConsoleApp/README.md)
+
+## Developer roadmap
+
+- **2026 — SDK Foundation:** complete for the currently verified modules.
+- **Future — More modules:** added only after their backend contracts are verified.
+- **Future — Public APIs:** planned; no Developer API keys, OAuth, or sandbox are exposed today.
+- **Future — Marketplace integrations:** planned after the Developer Platform contract exists.
 
 ## Contributing and license
 

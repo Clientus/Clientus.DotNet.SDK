@@ -8,11 +8,11 @@
     <IsPackable>true</IsPackable>
 
     <PackageId>Clientus.ApiClient</PackageId>
-    <Title>Clientus .NET API Client</Title>
+    <Title>Clientus SDK for .NET</Title>
 
-    <Description>Official .NET client for authentication and access to the Clientus platform.</Description>
+    <Description>Official Clientus SDK for authenticated integrations with the Clientus platform.</Description>
 
-    <PackageTags>clientus;sdk;dotnet;api;http;crm</PackageTags>
+    <PackageTags>Clientus;SDK;API;Integration;Marketplace;dotnet;http;crm</PackageTags>
 
     <PackageReleaseNotes>First beta release of the Clientus .NET API client.</PackageReleaseNotes>
   </PropertyGroup>

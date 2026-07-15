@@ -1,85 +1,39 @@
-﻿# Roadmap SDK
+# Public roadmap
 
-## Sprint 01 ✅
+This is the concise public roadmap. Detailed contract and blocker status lives in the
+[engineering roadmap](../../SDK-ROADMAP.md). Planned items are not available SDK capabilities.
 
-Authentication
+## Available in the current beta
 
-- Login
-- Logout
-- GetCurrentUser
+- Core configuration, HTTP, authentication/session, serialization, retry, error, cancellation, and
+  lifecycle foundation.
+- Customers: reads, search, supported-field update, existence/count, and deletion.
+- Quotes: reads, ordered items, existence/count, verified status transitions, and deletion.
+- Invoices: reads, ordered items, existence/count, and deletion.
+- Deterministic automated tests and local NuGet/symbol package generation.
 
-Customers
+## Recommended next module
 
-- GetAll
-- GetById
-- Search
+Catalog is the next contract-audit candidate because Quotes and Invoices reference catalog item
+snapshots. Read operations should be verified before any mutations are considered.
 
----
+## Later contract audits
 
-## Sprint 02
+- Work Reports and Agenda
+- Payments and Installments
+- Contracts and Reports
+- Marketplace and Notifications
+- AI and Voice
+- Developer APIs, including keys, scopes, webhooks, limits, and audit behavior
 
-Products
+## Server-orchestrated blockers
 
-- GetAll
-- GetById
-- Search
-- GetByBarcode
-- Create
-- Update
-- Delete
+Current SDK services intentionally do not approximate quote/invoice creation, numbering, conversion,
+payments, QR Bill/IBAN logic, deposits, installment generation, public documents, attachment
+mutation, PDF generation, or delivery workflows. These require verified server APIs and side effects.
 
----
+## Release direction
 
-## Sprint 03
-
-Quotes
-
----
-
-## Sprint 04
-
-WorkReports
-
----
-
-## Sprint 05
-
-Invoices
-
----
-
-## Sprint 06
-
-Files
-
-- Upload
-- Download
-- Preview
-
----
-
-## Sprint 07
-
-AI
-
----
-
-## Sprint 08
-
-Offline Sync
-
----
-
-## Sprint 09
-
-Desktop Support
-
----
-
-## Sprint 10
-
-Packaging
-
-- NuGet
-- Versioning
-- Documentation
+The repository is packaging-ready for local beta artifacts. Public distribution, contribution
+process, and later target-framework support require explicit release decisions and are not current
+capabilities.

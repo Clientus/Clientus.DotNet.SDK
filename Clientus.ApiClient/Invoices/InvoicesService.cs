@@ -27,10 +27,15 @@ public class InvoicesService
         "line_kind,price_tax_mode_snapshot,vat_rate_snapshot,discount_snapshot,unit_price_input," +
         "unit_price_net,unit_price_gross,net_amount,vat_amount,gross_amount,created_at";
 
-    private readonly ClientusHttpClient _http;
+    private readonly IClientusApiTransport _http;
 
     /// <summary>Initializes the invoice service with an authenticated transport.</summary>
     public InvoicesService(ClientusHttpClient http)
+        : this((IClientusApiTransport)http)
+    {
+    }
+
+    internal InvoicesService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
         _http = http;

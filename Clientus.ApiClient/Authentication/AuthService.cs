@@ -10,7 +10,7 @@ namespace Clientus.ApiClient.Authentication;
 /// </summary>
 public class AuthService
 {
-    private readonly ClientusHttpClient _http;
+    private readonly IClientusApiTransport _http;
     private AuthSession? _currentSession;
 
     /// <summary>
@@ -50,6 +50,11 @@ public class AuthService
     /// Thrown when <paramref name="http"/> is <see langword="null"/>.
     /// </exception>
     public AuthService(ClientusHttpClient http)
+        : this((IClientusApiTransport)http)
+    {
+    }
+
+    internal AuthService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
 
@@ -104,20 +109,18 @@ public class AuthService
             };
         }
 
+        if (!IsEmail(identifier))
+        {
+            return new LoginResponse
+            {
+                Success = false,
+                Error = "Legacy username authentication is no longer supported. Use an email address."
+            };
+        }
+
         try
         {
-            var email = await ResolveEmailAsync(
-     identifier,
-     cancellationToken);
-
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Error = "Username or email was not found."
-                };
-            }
+            var email = identifier.ToLowerInvariant();
 
             var session = await _http.PostAsync<AuthSession>(
     "/auth/v1/token?grant_type=password",
@@ -166,22 +169,6 @@ public class AuthService
                 Error = $"Unexpected error during authentication: {exception.Message}"
             };
         }
-    }
-
-    private async Task<string?> ResolveEmailAsync(
-    string identifier,
-    CancellationToken cancellationToken = default)
-    {
-        if (IsEmail(identifier))
-            return identifier.Trim().ToLowerInvariant();
-
-        return await _http.PostAsync<string?>(
-            "/rest/v1/rpc/email_for_username",
-            new
-            {
-                _username = identifier.Trim()
-            },
-            cancellationToken);
     }
 
     private static bool IsEmail(string value)

@@ -4,6 +4,8 @@ using Clientus.ApiClient.Configuration;
 using Clientus.ApiClient.Common;
 using Clientus.ApiClient.Serialization;
 using System.Net;
+using System.Reflection;
+using System.Text.Json;
 
 
 namespace Clientus.ApiClient.Http;
@@ -15,11 +17,12 @@ namespace Clientus.ApiClient.Http;
 /// GET, HEAD, and DELETE retry configured transient status codes. POST and PATCH are never retried.
 /// This type owns its underlying HTTP resources and must be disposed.
 /// </remarks>
-public class ClientusHttpClient : IDisposable
+public class ClientusHttpClient : IDisposable, IClientusApiTransport
 {
     private readonly HttpClient _httpClient;
     private readonly int _maxRetryAttempts;
     private readonly TimeSpan _initialRetryDelay;
+    private readonly TimeSpan _maximumRetryDelay;
     private int _disposed;
 
     /// <summary>
@@ -39,7 +42,7 @@ public class ClientusHttpClient : IDisposable
     /// </exception>
     /// <remarks>The client owns and disposes its underlying <see cref="HttpClient"/>.</remarks>
     public ClientusHttpClient(ClientusConfiguration configuration)
-        : this(configuration, null)
+        : this(configuration, configuration?.HttpMessageHandler)
     {
     }
 
@@ -76,17 +79,22 @@ public class ClientusHttpClient : IDisposable
         if (configuration.InitialRetryDelay < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(configuration.InitialRetryDelay), "Retry delay cannot be negative.");
 
+        if (configuration.MaximumRetryDelay < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(configuration.MaximumRetryDelay), "Maximum retry delay cannot be negative.");
+
         _maxRetryAttempts = configuration.MaxRetryAttempts;
         _initialRetryDelay = configuration.InitialRetryDelay;
+        _maximumRetryDelay = configuration.MaximumRetryDelay;
 
         _httpClient = handler is null
             ? new HttpClient()
-            : new HttpClient(handler);
+            : new HttpClient(handler, configuration.DisposeHttpMessageHandler);
 
         _httpClient.BaseAddress = baseUri;
         _httpClient.Timeout = configuration.Timeout;
 
         _httpClient.DefaultRequestHeaders.Add("apikey", configuration.ApiKey);
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(GetUserAgent());
     }
 
 
@@ -109,11 +117,9 @@ public class ClientusHttpClient : IDisposable
                 return response;
             }
 
+            var retryDelay = GetRetryDelay(response, attempt);
             response.Dispose();
-
-            await Task.Delay(
-                GetRetryDelay(attempt),
-                cancellationToken);
+            await Task.Delay(retryDelay, cancellationToken);
         }
     }
 
@@ -152,13 +158,7 @@ public class ClientusHttpClient : IDisposable
 
         if (!response.IsSuccessStatusCode)
         {
-            var responseBody =
-                await response.Content.ReadAsStringAsync(cancellationToken);
-
-            throw new ApiException(
-                $"La richiesta API è fallita con stato {(int)response.StatusCode} {response.ReasonPhrase}.",
-                response.StatusCode,
-                responseBody);
+            throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
         return await response.Content.ReadFromJsonAsync<T>(
@@ -213,13 +213,7 @@ public class ClientusHttpClient : IDisposable
 
         if (!response.IsSuccessStatusCode)
         {
-            var responseBody =
-                await response.Content.ReadAsStringAsync(cancellationToken);
-
-            throw new ApiException(
-                $"La richiesta API è fallita con stato {(int)response.StatusCode} {response.ReasonPhrase}.",
-                response.StatusCode,
-                responseBody);
+            throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
         return await response.Content.ReadFromJsonAsync<T>(
@@ -270,13 +264,7 @@ public class ClientusHttpClient : IDisposable
 
         if (!response.IsSuccessStatusCode)
         {
-            var responseBody =
-                await response.Content.ReadAsStringAsync(cancellationToken);
-
-            throw new ApiException(
-                $"The API request failed with status {(int)response.StatusCode} {response.ReasonPhrase}.",
-                response.StatusCode,
-                responseBody);
+            throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
         return await response.Content.ReadFromJsonAsync<T>(
@@ -312,13 +300,7 @@ public class ClientusHttpClient : IDisposable
 
         if (!response.IsSuccessStatusCode)
         {
-            var responseBody =
-                await response.Content.ReadAsStringAsync(cancellationToken);
-
-            throw new ApiException(
-                $"The API request failed with status {(int)response.StatusCode} {response.ReasonPhrase}.",
-                response.StatusCode,
-                responseBody);
+            throw await CreateApiExceptionAsync(response, cancellationToken);
         }
     }
 
@@ -360,13 +342,7 @@ public class ClientusHttpClient : IDisposable
 
         if (!response.IsSuccessStatusCode)
         {
-            var responseBody =
-                await response.Content.ReadAsStringAsync(cancellationToken);
-
-            throw new ApiException(
-                $"The API request failed with status {(int)response.StatusCode} {response.ReasonPhrase}.",
-                response.StatusCode,
-                responseBody);
+            throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
         return response.Content.Headers.ContentRange?.Length
@@ -384,12 +360,126 @@ public class ClientusHttpClient : IDisposable
             HttpStatusCode.GatewayTimeout;
     }
 
-    private TimeSpan GetRetryDelay(int attemptNumber)
+    private TimeSpan GetRetryDelay(HttpResponseMessage response, int attemptNumber)
     {
+        var retryAfter = GetRetryAfter(response);
+        if (retryAfter is not null)
+        {
+            return retryAfter.Value > _maximumRetryDelay
+                ? _maximumRetryDelay
+                : retryAfter.Value;
+        }
+
         var milliseconds = Math.Min(
             int.MaxValue,
             _initialRetryDelay.TotalMilliseconds * attemptNumber);
-        return TimeSpan.FromMilliseconds(milliseconds);
+        var delay = TimeSpan.FromMilliseconds(milliseconds);
+        return delay > _maximumRetryDelay ? _maximumRetryDelay : delay;
+    }
+
+    private static TimeSpan? GetRetryAfter(HttpResponseMessage response)
+    {
+        var retryAfter = response.Headers.RetryAfter;
+        if (retryAfter?.Delta is { } delta)
+        {
+            return delta < TimeSpan.Zero ? TimeSpan.Zero : delta;
+        }
+
+        if (retryAfter?.Date is { } date)
+        {
+            var delay = date - DateTimeOffset.UtcNow;
+            return delay < TimeSpan.Zero ? TimeSpan.Zero : delay;
+        }
+
+        return null;
+    }
+
+    private static async Task<ApiException> CreateApiExceptionAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        string? code = null;
+        string? serverMessage = null;
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? validationErrors = null;
+
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+                var root = document.RootElement;
+                if (root.ValueKind == JsonValueKind.Object)
+                {
+                    code = ReadString(root, "code");
+                    serverMessage = ReadString(root, "message");
+                    validationErrors = ReadValidationErrors(root);
+                }
+            }
+            catch (JsonException)
+            {
+                // Preserve non-JSON legacy response bodies without guessing their structure.
+            }
+        }
+
+        var requestId = GetHeader(response, "x-request-id")
+            ?? GetHeader(response, "x-correlation-id");
+        var message = string.IsNullOrWhiteSpace(serverMessage)
+            ? $"The API request failed with status {(int)response.StatusCode} {response.ReasonPhrase}."
+            : serverMessage;
+
+        return new ApiException(
+            message,
+            response.StatusCode,
+            body,
+            innerException: null,
+            errorCode: code,
+            requestId: requestId,
+            isRetryable: IsTransientStatusCode(response.StatusCode),
+            retryAfter: GetRetryAfter(response),
+            validationErrors: validationErrors);
+    }
+
+    private static string? ReadString(JsonElement root, string propertyName) =>
+        root.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>>? ReadValidationErrors(JsonElement root)
+    {
+        if (!root.TryGetProperty("errors", out var errors) || errors.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var result = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        foreach (var property in errors.EnumerateObject())
+        {
+            if (property.Value.ValueKind == JsonValueKind.Array)
+            {
+                result[property.Name] = property.Value.EnumerateArray()
+                    .Where(value => value.ValueKind == JsonValueKind.String)
+                    .Select(value => value.GetString()!)
+                    .ToArray();
+            }
+            else if (property.Value.ValueKind == JsonValueKind.String)
+            {
+                result[property.Name] = new[] { property.Value.GetString()! };
+            }
+        }
+
+        return result.Count == 0 ? null : result;
+    }
+
+    private static string? GetHeader(HttpResponseMessage response, string name) =>
+        response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
+
+    private static string GetUserAgent()
+    {
+        var version = typeof(ClientusHttpClient).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion.Split('+')[0] ?? "unknown";
+        return $"Clientus-DotNet-SDK/{version}";
     }
 
     /// <summary>
@@ -431,6 +521,8 @@ public class ClientusHttpClient : IDisposable
             Volatile.Read(ref _disposed) != 0,
             this);
     }
+
+    void IClientusApiTransport.ThrowIfDisposed() => ThrowIfDisposed();
 
     private static void ValidateEndpoint(string endpoint)
     {

@@ -49,6 +49,10 @@ public sealed class ClientusHttpClientTests
         delay.InitialRetryDelay = TimeSpan.FromMilliseconds(-1);
         Assert.Throws<ArgumentOutOfRangeException>(() => new ClientusHttpClient(delay));
 
+        var maximumDelay = ValidConfiguration();
+        maximumDelay.MaximumRetryDelay = TimeSpan.FromMilliseconds(-1);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ClientusHttpClient(maximumDelay));
+
         var infinite = ValidConfiguration();
         infinite.Timeout = Timeout.InfiniteTimeSpan;
         using var client = new ClientusHttpClient(infinite);

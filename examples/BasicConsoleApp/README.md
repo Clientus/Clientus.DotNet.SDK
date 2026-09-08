@@ -1,7 +1,8 @@
 # Basic console application
 
-This example authenticates with Clientus and lists the customers visible to the authenticated user
-through Supabase row-level security.
+This example uses current legacy connectivity to authenticate with Clientus and list customers
+visible to the authenticated user through Supabase row-level security. It is not a Public API v1 or
+developer-credential example; those contracts are not available yet.
 
 Set `CLIENTUS_BASE_URL`, `CLIENTUS_API_KEY`, `CLIENTUS_IDENTIFIER`, and `CLIENTUS_PASSWORD`, then run:
 

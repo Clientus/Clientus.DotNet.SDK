@@ -4,11 +4,16 @@ The official Clientus SDK for developers building integrations and solutions con
 Clientus ecosystem. The current beta provides authenticated, RLS-controlled access through the
 verified Clientus backend contracts.
 
+> **Pre-release connectivity notice:** version 1.0.0-beta.2 still uses legacy Supabase Auth and
+> PostgREST connectivity. This is not the intended long-term third-party API contract. Clientus
+> Public API v1, developer credentials, application scopes, and environment selection are not yet
+> available. This release provides transition foundations without inventing future endpoints.
+
 ## Current status
 
 | | |
 |---|---|
-| Version | Beta (`1.0.0-beta.1`) |
+| Version | Beta (`1.0.0-beta.2`) |
 | First release | 14 July 2026 |
 | Target framework | .NET 8 (`net8.0`) |
 
@@ -24,7 +29,7 @@ planned for a later release.
   deletion.
 - **Users:** current profile lookup by authenticated user identifier and profile search.
 - **Catalog:** verified reads, search, categories, update, existence, count, and deletion.
-- **Quotes:** reads with line items, status transitions, existence, count, and deletion.
+- **Quotes:** reads with line items, existence, count, and deletion. Direct status mutation is disabled.
 - **Invoices:** reads with line items, existence, count, and deletion.
 
 ## Installation
@@ -52,17 +57,21 @@ using var client = new ClientusClient(new ClientusConfiguration
     ApiKey = "your-supabase-anon-key",
     Timeout = TimeSpan.FromSeconds(30),
     MaxRetryAttempts = 3,
-    InitialRetryDelay = TimeSpan.FromMilliseconds(500)
+    InitialRetryDelay = TimeSpan.FromMilliseconds(500),
+    MaximumRetryDelay = TimeSpan.FromSeconds(30)
 });
 ```
 
-`BaseUrl` must be an absolute HTTP or HTTPS URL. `ApiKey` is the public/anonymous project key. Never
+`BaseUrl` must be an absolute HTTP or HTTPS URL. `ApiKey` is the legacy public/anonymous project key. Never
 embed a Supabase service-role key in a client application.
 
 ## Authentication overview
 
-Authentication supports username or email login, session refresh, current-user lookup, and logout.
+Legacy authentication supports email login, session refresh, current-user lookup, and logout.
 Successful login installs the bearer access token on the shared transport.
+
+Username login is no longer supported. Its former anonymous lookup RPC is not available under the
+current backend security contract, so username input fails locally without making a network request.
 
 ```csharp
 using Clientus.ApiClient.Authentication.Models;
@@ -165,15 +174,13 @@ var quotes = await client.Quotes.ListAsync(cancellationToken);
 var exists = await client.Quotes.ExistsAsync(quoteId, cancellationToken);
 var count = await client.Quotes.CountAsync(cancellationToken);
 
-if (quote?.Status == QuoteStatus.Draft)
-    quote = await client.Quotes.UpdateStatusAsync(quoteId, QuoteStatus.Sent, cancellationToken);
-
 await client.Quotes.DeleteAsync(quoteId, cancellationToken);
 ```
 
-Quote items are loaded with a second request and returned in ascending position order. See
-[Modules](Clientus.ApiClient/docs/MODULES.md#quotes) for the exact status state machine and deletion
-limitations.
+Quote items are loaded with a second request and returned in ascending position order.
+`UpdateStatusAsync` remains in the public API for compatibility but is obsolete and fails closed:
+the current Clientus workflow cannot safely be reproduced through a direct table PATCH. See
+[Modules](Clientus.ApiClient/docs/MODULES.md#quotes) for deletion limitations.
 
 ## Invoices examples
 
@@ -193,8 +200,10 @@ payment-trigger and automation effects that a direct PATCH cannot reproduce.
 ## Retry behavior
 
 The transport may retry GET, HEAD, and DELETE after HTTP 408, 429, 502, 503, or 504. The configured
-`MaxRetryAttempts` includes the initial request, and each retry creates a fresh request. POST and
-PATCH are never retried. Cancellation and non-transient failures are never retried.
+`MaxRetryAttempts` includes the initial request, and each retry creates a fresh request. A valid
+server `Retry-After` value is honored up to `MaximumRetryDelay`; otherwise the deterministic
+progressive delay is used and capped by the same value. POST and PATCH are never retried.
+Cancellation and non-transient failures are never retried.
 
 DELETE retry safety describes transport behavior; authorization and final visibility remain backend
 concerns.

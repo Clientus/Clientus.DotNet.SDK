@@ -50,23 +50,16 @@ Customer creation is not exposed because there is no verified SDK creation contr
 Supported:
 
 - `GetAsync`, `GetWithItemsAsync`, `ListAsync`, `ExistsAsync`, `CountAsync`
-- `UpdateStatusAsync`
+- obsolete `UpdateStatusAsync` entry point, which fails closed without a request
 - `DeleteAsync`
 
 `GetWithItemsAsync` performs two safe requests. It returns `null` when the quote is not RLS-visible;
 otherwise it returns a quote plus a read-only item snapshot ordered by position ascending.
 
-The verified status transitions are:
-
-- `draft` → `sent`, `accepted`, `rejected`, or `expired`
-- `sent` → `accepted`, `rejected`, `expired`, or `draft`
-- `expired` → `sent`
-- `accepted` and `rejected` are terminal
-- same-state requests return the current quote without PATCH
-
-Transitioning to sent sets `sent_at` only when it is currently null. Acceptance and rejection set
-their corresponding timestamps. Moving to draft does not clear timestamps, and expiry invents no
-timestamp. Authorization remains controlled by RLS and billing-management policies.
+Direct quote status mutation is disabled. The current Clientus application performs permission,
+transition, document-delivery, and automation work that a PostgREST PATCH cannot reproduce.
+`UpdateStatusAsync` is retained for compatibility, is marked obsolete, sends no request, and throws
+`NotSupportedException`. Public API v1 must provide the canonical workflow.
 
 Deleting a quote cascades quote items and nulls configured invoice references. It does not delete
 logical `company_documents` attachment rows or storage objects.

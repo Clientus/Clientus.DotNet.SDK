@@ -7,7 +7,7 @@ namespace Clientus.ApiClient.Customers;
 /// </summary>
 public class CustomersService
 {
-    private readonly ClientusHttpClient _http;
+    private readonly IClientusApiTransport _http;
 
     /// <summary>
     /// Initializes a new instance of the CustomersService class.
@@ -15,6 +15,11 @@ public class CustomersService
     /// <param name="http">HTTP client used to communicate with Clientus.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="http"/> is null.</exception>
     public CustomersService(ClientusHttpClient http)
+        : this((IClientusApiTransport)http)
+    {
+    }
+
+    internal CustomersService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
         _http = http;

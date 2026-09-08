@@ -6,7 +6,8 @@
 public class LoginRequest
 {
     /// <summary>
-    /// Gets or sets the username or email address.
+    /// Gets or sets the email address used for legacy authentication.
+    /// Username authentication is no longer supported by the legacy backend contract.
     /// </summary>
     public string Identifier { get; set; } = string.Empty;
 

@@ -15,7 +15,7 @@
 
     <PackageTags>clientus;sdk;dotnet;api;core</PackageTags>
 
-    <PackageReleaseNotes>First beta release.</PackageReleaseNotes>
+    <PackageReleaseNotes>Public API v1 transition foundation for shared SDK contracts.</PackageReleaseNotes>
   </PropertyGroup>
 
   

@@ -10,7 +10,7 @@ This is the concise public roadmap. Detailed contract and blocker status lives i
 - Catalog: RLS item/category reads, type filtering, bounded search, supported-field update,
   existence/count, and deletion.
 - Customers: reads, search, supported-field update, existence/count, and deletion.
-- Quotes: reads, ordered items, existence/count, verified status transitions, and deletion.
+- Quotes: reads, ordered items, existence/count, and deletion; direct status mutation fails closed.
 - Invoices: reads, ordered items, existence/count, and deletion.
 - Deterministic automated tests and local NuGet/symbol package generation.
 

@@ -9,7 +9,7 @@ namespace Clientus.ApiClient.Users;
 /// </summary>
 public class UserService
 {
-    private readonly ClientusHttpClient _http;
+    private readonly IClientusApiTransport _http;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserService"/> class.
@@ -21,6 +21,11 @@ public class UserService
     /// Thrown when <paramref name="http"/> is <see langword="null"/>.
     /// </exception>
     public UserService(ClientusHttpClient http)
+        : this((IClientusApiTransport)http)
+    {
+    }
+
+    internal UserService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
         _http = http;

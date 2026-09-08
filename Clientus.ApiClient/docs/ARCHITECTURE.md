@@ -1,7 +1,25 @@
 # SDK architecture
 
-This document describes the architecture that exists in `1.0.0-beta.1`. Future modules are listed in
+This document describes the architecture that exists in `1.0.0-beta.2`. Future modules are listed in
 the roadmaps, not presented here as implemented components.
+
+## Public API transition boundary
+
+Public services depend internally on `IClientusApiTransport`, rather than on the concrete HTTP
+implementation. `ClientusHttpClient` is the legacy transport and still applies Supabase/PostgREST
+details required by this beta. The internal boundary allows a later Public API v1 transport without
+inventing routes or credentials before their server contracts exist.
+
+`ClientusConfiguration.BaseUrl` is future-neutral. `ApiKey` remains the legacy Supabase publishable
+key and must never contain a service-role key. Optional message-handler ownership is explicit through
+`DisposeHttpMessageHandler`. Developer credentials and environment selection remain deferred.
+
+`ApiException` carries server-supplied HTTP status, code, message, request ID, retryability,
+`Retry-After`, and validation details where available. The SDK does not synthesize missing server
+metadata. A versioned User-Agent identifies SDK traffic without sending customer telemetry.
+
+`PageRequest` and `Page<T>` define opaque continuation metadata for Public API v1. Current legacy
+list methods remain compatibility APIs and do not pretend to implement server pagination.
 
 ## Dependency diagram
 
@@ -65,6 +83,14 @@ nor bypasses RLS.
 
 `PostgRestQuery` is a small internal helper for identifier validation, escaped exact filters, and
 empty read-only list normalization. It is not public API.
+
+Legacy email/password authentication remains available. Username authentication is disabled because
+its pre-authentication lookup RPC is no longer available to anonymous callers. Developer/application
+authentication remains deferred to a verified Public API contract.
+
+Direct quote status mutation is obsolete and fails closed because a table PATCH cannot reproduce the
+current server permission, delivery, transition, and automation workflow. Other PATCH and DELETE APIs
+remain legacy compatibility operations; canonical authorization must be enforced by the future API.
 
 ## Serialization
 

@@ -24,11 +24,16 @@ public class QuotesService
         "line_kind,price_tax_mode_snapshot,vat_rate_snapshot,discount_snapshot,unit_price_input," +
         "unit_price_net,unit_price_gross,net_amount,vat_amount,gross_amount,created_at";
 
-    private readonly ClientusHttpClient _http;
+    private readonly IClientusApiTransport _http;
 
     /// <summary>Initializes the quote service.</summary>
     /// <param name="http">The authenticated HTTP transport.</param>
     public QuotesService(ClientusHttpClient http)
+        : this((IClientusApiTransport)http)
+    {
+    }
+
+    internal QuotesService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
         _http = http;
@@ -117,21 +122,20 @@ public class QuotesService
     }
 
     /// <summary>
-    /// Applies a verified authenticated quote status transition. Authorization remains enforced
-    /// by RLS and the quote <c>manage_billing</c> update policy.
+    /// Represents the legacy quote status mutation entry point.
     /// </summary>
     /// <remarks>
-    /// Allowed transitions are draft to sent/accepted/rejected/expired; sent to
-    /// accepted/rejected/expired/draft; and expired to sent. Accepted and rejected are terminal.
-    /// A same-state request performs no PATCH.
+    /// Direct quote status mutation cannot reproduce the current Clientus server workflow and is
+    /// therefore disabled. Public API v1 will provide a canonical workflow endpoint.
     /// </remarks>
     /// <param name="id">The quote identifier.</param>
     /// <param name="targetStatus">The verified target status.</param>
     /// <param name="cancellationToken">A token used to cancel the read or patch.</param>
-    /// <returns>The current quote for a no-op, or the representation returned by the update.</returns>
+    /// <returns>This method does not return while legacy direct mutation is disabled.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="id"/> is empty or whitespace.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="targetStatus"/> is undefined.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the quote is unavailable, the transition is forbidden, or no representation is returned.</exception>
+    /// <exception cref="NotSupportedException">Always thrown because direct status mutation is unsafe.</exception>
+    [Obsolete("Direct quote status mutation is disabled. Wait for the Clientus Public API v1 workflow endpoint.")]
     public async Task<Quote> UpdateStatusAsync(
         string id,
         QuoteStatus targetStatus,
@@ -144,35 +148,10 @@ public class QuotesService
             throw new ArgumentOutOfRangeException(nameof(targetStatus));
         }
 
-        var current = await GetAsync(id, cancellationToken)
-            ?? throw new InvalidOperationException("The quote was not found or is not visible.");
-
-        if (current.Status == targetStatus)
-        {
-            return current;
-        }
-
-        if (!IsAllowed(current.Status, targetStatus))
-        {
-            throw new InvalidOperationException(
-                $"Quote status transition {current.Status} -> {targetStatus} is not allowed.");
-        }
-
-        var now = DateTimeOffset.UtcNow;
-        object patch = targetStatus switch
-        {
-            QuoteStatus.Sent when current.SentAt is null => new { status = targetStatus, sent_at = now },
-            QuoteStatus.Accepted => new { status = targetStatus, accepted_at = now },
-            QuoteStatus.Rejected => new { status = targetStatus, rejected_at = now },
-            _ => new { status = targetStatus }
-        };
-
-        var rows = await _http.PatchAsync<List<Quote>>(
-            $"/rest/v1/quotes?select={QuoteFields}&{ExactId(id)}&{PostgRestQuery.ExactFilter("company_id", current.CompanyId, nameof(current.CompanyId))}",
-            patch,
-            cancellationToken);
-        return rows?.SingleOrDefault()
-            ?? throw new InvalidOperationException("The API did not return the updated quote.");
+        cancellationToken.ThrowIfCancellationRequested();
+        await Task.CompletedTask;
+        throw new NotSupportedException(
+            "Direct quote status mutation is disabled until Clientus Public API v1 provides the canonical workflow.");
     }
 
     /// <summary>
@@ -192,15 +171,6 @@ public class QuotesService
     }
 
     internal void ThrowIfDisposed() => _http.ThrowIfDisposed();
-
-    private static bool IsAllowed(QuoteStatus current, QuoteStatus target) => current switch
-    {
-        QuoteStatus.Draft => target is QuoteStatus.Sent or QuoteStatus.Accepted or QuoteStatus.Rejected or QuoteStatus.Expired,
-        QuoteStatus.Sent => target is QuoteStatus.Accepted or QuoteStatus.Rejected or QuoteStatus.Expired or QuoteStatus.Draft,
-        QuoteStatus.Expired => target is QuoteStatus.Sent,
-        QuoteStatus.Accepted or QuoteStatus.Rejected => false,
-        _ => false
-    };
 
     private static string ExactId(string id) => PostgRestQuery.ExactFilter("id", id, nameof(id));
 

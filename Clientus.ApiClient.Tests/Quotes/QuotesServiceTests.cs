@@ -266,118 +266,21 @@ public sealed class QuotesServiceTests
             () => fixture.Service.CountAsync(new CancellationToken(true)));
     }
 
-    public static TheoryData<QuoteStatus, QuoteStatus> AllowedTransitions => new()
-    {
-        { QuoteStatus.Draft, QuoteStatus.Sent }, { QuoteStatus.Draft, QuoteStatus.Accepted },
-        { QuoteStatus.Draft, QuoteStatus.Rejected }, { QuoteStatus.Draft, QuoteStatus.Expired },
-        { QuoteStatus.Sent, QuoteStatus.Accepted }, { QuoteStatus.Sent, QuoteStatus.Rejected },
-        { QuoteStatus.Sent, QuoteStatus.Expired }, { QuoteStatus.Sent, QuoteStatus.Draft },
-        { QuoteStatus.Expired, QuoteStatus.Sent }
-    };
-
-    [Theory]
-    [MemberData(nameof(AllowedTransitions))]
-    public async Task UpdateStatusAsync_AllowsExactlyVerifiedTransitions(QuoteStatus current, QuoteStatus target)
-    {
-        using var fixture = StatusFixture(current, target);
-        var updated = await fixture.Service.UpdateStatusAsync("q/1", target);
-        Assert.Equal(target, updated.Status);
-        Assert.Equal(2, fixture.Handler.Requests.Count);
-        var patch = fixture.Handler.Requests[1];
-        Assert.Equal(HttpMethod.Patch, patch.Method);
-        Assert.Contains("id=eq.q%2F1", patch.Uri.OriginalString, StringComparison.Ordinal);
-        Assert.Contains("company_id=eq.c%2F1", patch.Uri.OriginalString, StringComparison.Ordinal);
-        Assert.Equal("return=representation", Assert.Single(patch.Headers["Prefer"]));
-    }
-
-    public static TheoryData<QuoteStatus, QuoteStatus> ForbiddenTransitions => new()
-    {
-        { QuoteStatus.Accepted, QuoteStatus.Draft }, { QuoteStatus.Accepted, QuoteStatus.Sent },
-        { QuoteStatus.Accepted, QuoteStatus.Rejected }, { QuoteStatus.Accepted, QuoteStatus.Expired },
-        { QuoteStatus.Rejected, QuoteStatus.Draft }, { QuoteStatus.Rejected, QuoteStatus.Sent },
-        { QuoteStatus.Rejected, QuoteStatus.Accepted }, { QuoteStatus.Rejected, QuoteStatus.Expired },
-        { QuoteStatus.Expired, QuoteStatus.Draft }, { QuoteStatus.Expired, QuoteStatus.Accepted },
-        { QuoteStatus.Expired, QuoteStatus.Rejected }
-    };
-
-    [Theory]
-    [MemberData(nameof(ForbiddenTransitions))]
-    public async Task UpdateStatusAsync_RejectsForbiddenTransitionsWithoutPatch(QuoteStatus current, QuoteStatus target)
-    {
-        using var fixture = CreateFixture(JsonResponse(CurrentQuoteJson(current)));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.UpdateStatusAsync("q1", target));
-        Assert.Single(fixture.Handler.Requests);
-    }
-
     [Theory]
     [InlineData(QuoteStatus.Draft)]
     [InlineData(QuoteStatus.Sent)]
     [InlineData(QuoteStatus.Accepted)]
     [InlineData(QuoteStatus.Rejected)]
     [InlineData(QuoteStatus.Expired)]
-    public async Task UpdateStatusAsync_SameStateReturnsCurrentWithoutPatch(QuoteStatus status)
-    {
-        using var fixture = CreateFixture(JsonResponse(CurrentQuoteJson(status)));
-        var result = await fixture.Service.UpdateStatusAsync("q1", status);
-        Assert.Equal(status, result.Status);
-        Assert.Single(fixture.Handler.Requests);
-    }
-
-    [Theory]
-    [InlineData(QuoteStatus.Sent, "sent_at")]
-    [InlineData(QuoteStatus.Accepted, "accepted_at")]
-    [InlineData(QuoteStatus.Rejected, "rejected_at")]
-    public async Task UpdateStatusAsync_WritesRequiredTimestampOnly(QuoteStatus target, string timestampName)
-    {
-        using var fixture = StatusFixture(QuoteStatus.Draft, target);
-        await fixture.Service.UpdateStatusAsync("q1", target);
-        using var payload = JsonDocument.Parse(fixture.Handler.Requests[1].Body!);
-        Assert.Equal(target.ToString().ToLowerInvariant(), payload.RootElement.GetProperty("status").GetString());
-        Assert.True(payload.RootElement.TryGetProperty(timestampName, out _));
-        foreach (var name in new[] { "sent_at", "accepted_at", "rejected_at" }.Where(x => x != timestampName))
-            Assert.False(payload.RootElement.TryGetProperty(name, out _));
-    }
-
-    [Fact]
-    public async Task UpdateStatusAsync_ResendPreservesSentAtAndDoesNotMutateCurrentModel()
-    {
-        var original = DateTimeOffset.Parse("2026-07-01T10:00:00Z");
-        using var fixture = CreateFixture(attempt => attempt == 1
-            ? JsonResponse(CurrentQuoteJson(QuoteStatus.Expired, sentAt: original))
-            : JsonResponse(CurrentQuoteJson(QuoteStatus.Sent, sentAt: original)));
-        await fixture.Service.UpdateStatusAsync("q1", QuoteStatus.Sent);
-        using var payload = JsonDocument.Parse(fixture.Handler.Requests[1].Body!);
-        Assert.False(payload.RootElement.TryGetProperty("sent_at", out _));
-    }
-
-    [Theory]
-    [InlineData(QuoteStatus.Draft)]
-    [InlineData(QuoteStatus.Expired)]
-    public async Task UpdateStatusAsync_DraftAndExpiredInventNoTimestamp(QuoteStatus target)
-    {
-        var current = target == QuoteStatus.Draft ? QuoteStatus.Sent : QuoteStatus.Draft;
-        using var fixture = StatusFixture(current, target);
-        await fixture.Service.UpdateStatusAsync("q1", target);
-        using var payload = JsonDocument.Parse(fixture.Handler.Requests[1].Body!);
-        Assert.Single(payload.RootElement.EnumerateObject());
-        Assert.False(payload.RootElement.TryGetProperty("expired_at", out _));
-    }
-
-    [Fact]
-    public async Task UpdateStatusAsync_DoesNotRetryPatch()
-    {
-        using var fixture = CreateFixture(attempt => attempt == 1
-            ? JsonResponse(CurrentQuoteJson(QuoteStatus.Draft))
-            : new HttpResponseMessage(HttpStatusCode.ServiceUnavailable), 3);
-        await Assert.ThrowsAsync<ApiException>(() => fixture.Service.UpdateStatusAsync("q1", QuoteStatus.Sent));
-        Assert.Equal(2, fixture.Handler.Requests.Count);
-    }
-
-    [Fact]
-    public async Task UpdateStatusAsync_MissingVisibleQuoteThrows()
+    public async Task UpdateStatusAsync_FailsClosedWithoutSendingARequest(QuoteStatus target)
     {
         using var fixture = CreateFixture(JsonResponse("[]"));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.Service.UpdateStatusAsync("q1", QuoteStatus.Sent));
+#pragma warning disable CS0618
+        var error = await Assert.ThrowsAsync<NotSupportedException>(
+            () => fixture.Service.UpdateStatusAsync("q1", target));
+#pragma warning restore CS0618
+        Assert.Contains("Public API v1", error.Message, StringComparison.Ordinal);
+        Assert.Empty(fixture.Handler.Requests);
     }
 
     [Fact]
@@ -386,8 +289,13 @@ public sealed class QuotesServiceTests
         using var fixture = CreateFixture((attempt, _, token) => attempt == 1
             ? JsonResponse(CurrentQuoteJson(QuoteStatus.Draft))
             : throw new OperationCanceledException(token));
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => fixture.Service.UpdateStatusAsync("q1", QuoteStatus.Sent, new CancellationToken(true)));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+        {
+#pragma warning disable CS0618
+            return fixture.Service.UpdateStatusAsync("q1", QuoteStatus.Sent, new CancellationToken(true));
+#pragma warning restore CS0618
+        });
+        Assert.Empty(fixture.Handler.Requests);
     }
 
     [Fact]

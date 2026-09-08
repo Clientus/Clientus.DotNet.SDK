@@ -17,6 +17,21 @@ public class ApiException : Exception
     /// </summary>
     public string? ResponseBody { get; }
 
+    /// <summary>Gets the stable server error code, when supplied by the server.</summary>
+    public string? ErrorCode { get; }
+
+    /// <summary>Gets the server correlation or request identifier, when supplied.</summary>
+    public string? RequestId { get; }
+
+    /// <summary>Gets a value indicating whether retrying the operation may be safe.</summary>
+    public bool IsRetryable { get; }
+
+    /// <summary>Gets the server-requested retry delay, when supplied.</summary>
+    public TimeSpan? RetryAfter { get; }
+
+    /// <summary>Gets structured validation details when supplied by the server.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>>? ValidationErrors { get; }
+
     /// <summary>
     /// Initializes a new API exception.
     /// </summary>
@@ -29,9 +44,37 @@ public class ApiException : Exception
         HttpStatusCode statusCode,
         string? responseBody = null,
         Exception? innerException = null)
+        : this(
+            message,
+            statusCode,
+            responseBody,
+            innerException,
+            errorCode: null,
+            requestId: null,
+            isRetryable: false,
+            retryAfter: null,
+            validationErrors: null)
+    {
+    }
+
+    internal ApiException(
+        string message,
+        HttpStatusCode statusCode,
+        string? responseBody,
+        Exception? innerException,
+        string? errorCode = null,
+        string? requestId = null,
+        bool isRetryable = false,
+        TimeSpan? retryAfter = null,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? validationErrors = null)
         : base(message, innerException)
     {
         StatusCode = statusCode;
         ResponseBody = responseBody;
+        ErrorCode = errorCode;
+        RequestId = requestId;
+        IsRetryable = isRetryable;
+        RetryAfter = retryAfter;
+        ValidationErrors = validationErrors;
     }
 }

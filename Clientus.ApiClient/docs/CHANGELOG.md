@@ -5,6 +5,17 @@ entry; the repository currently verifies local package generation.
 
 ## Unreleased
 
+### Public API v1 transition foundation
+
+- Added an internal transport boundary for the future Clientus Public API v1 migration.
+- Expanded API errors with optional server code, request ID, retryability, retry delay, and validation details.
+- Added opaque pagination types without faking pagination on legacy endpoints.
+- Added SDK version identification and `Retry-After` support for safe-method retries.
+- Added explicit optional HTTP handler ownership configuration.
+- Disabled unsupported username authentication without calling the retired anonymous RPC.
+- Deprecated and disabled direct quote status mutation because it cannot reproduce the canonical server workflow.
+- Clarified that current connectivity is legacy/pre-release and that credentials, scopes, and environments remain deferred.
+
 ### Documentation
 
 - Consolidated the root README as the public entry point.

@@ -15,10 +15,15 @@ public sealed class CatalogService
         "price_tax_mode,vat_rate,created_at,updated_at";
     private const string CategoryFields =
         "id,company_id,name,type,icon,color,sort_order,is_default,created_at,updated_at";
-    private readonly ClientusHttpClient _http;
+    private readonly IClientusApiTransport _http;
 
     /// <summary>Initializes the service with the shared authenticated transport.</summary>
     public CatalogService(ClientusHttpClient http)
+        : this((IClientusApiTransport)http)
+    {
+    }
+
+    internal CatalogService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
         _http = http;

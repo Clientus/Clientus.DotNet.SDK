@@ -14,7 +14,7 @@
 
     <PackageTags>Clientus;SDK;API;Integration;Marketplace;dotnet;http;crm</PackageTags>
 
-    <PackageReleaseNotes>First beta release of the Clientus .NET API client.</PackageReleaseNotes>
+    <PackageReleaseNotes>Public API v1 transition foundation with fail-closed legacy workflow safety.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

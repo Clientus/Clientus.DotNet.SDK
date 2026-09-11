@@ -1,39 +1,24 @@
 <Project>
-
   <PropertyGroup>
-
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>beta.2</VersionSuffix>
-
+    <VersionSuffix>beta.3</VersionSuffix>
     <Authors>Clientus</Authors>
     <Company>Clientus</Company>
-
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-
     <NeutralLanguage>en</NeutralLanguage>
-
     <Deterministic>true</Deterministic>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
-
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright © Clientus 2026</Copyright>
+    <Copyright>Copyright Ã‚Â© Clientus 2026</Copyright>
     <PackageIcon>icon.png</PackageIcon>
-
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-
     <RepositoryUrl>https://github.com/Clientus/Clientus.DotNet.SDK</RepositoryUrl>
-
     <RepositoryType>git</RepositoryType>
-
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-
   </PropertyGroup>
-
 </Project>

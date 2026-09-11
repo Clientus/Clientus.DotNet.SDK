@@ -1,318 +1,73 @@
-﻿using System.Net.Http;
-using System.Text.RegularExpressions;
 using Clientus.ApiClient.Authentication.Models;
 using Clientus.ApiClient.Http;
 
 namespace Clientus.ApiClient.Authentication;
 
 /// <summary>
-/// Provides authentication operations for the Clientus API.
+/// Compatibility surface for the retired end-user authentication flow.
+/// Public API v1 uses a developer credential configured on <see cref="ClientusClient"/>.
 /// </summary>
 public class AuthService
 {
     private readonly IClientusApiTransport _http;
-    private AuthSession? _currentSession;
 
-    /// <summary>
-    /// Gets the current authenticated session.
-    /// Returns <see langword="null"/> when no user is authenticated.
-    /// </summary>
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown when the underlying client has been disposed.
-    /// </exception>
-    public AuthSession? CurrentSession
-    {
-        get
-        {
-            _http.ThrowIfDisposed();
-            return _currentSession;
-        }
-        private set => _currentSession = value;
-    }
-
-
-    /// <summary>
-    /// Gets a value indicating whether a valid authenticated session is available.
-    /// </summary>
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown when the underlying client has been disposed.
-    /// </exception>
-    public bool IsAuthenticated =>
-        CurrentSession?.IsValid == true;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AuthService"/> class.
-    /// </summary>
-    /// <param name="http">
-    /// HTTP client used to communicate with the Clientus API.
-    /// </param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="http"/> is <see langword="null"/>.
-    /// </exception>
-    public AuthService(ClientusHttpClient http)
-        : this((IClientusApiTransport)http)
-    {
-    }
+    public AuthService(ClientusHttpClient http) : this((IClientusApiTransport)http) { }
 
     internal AuthService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
-
         _http = http;
     }
 
-
-    /// <summary>
-    /// Authenticates a user and creates a new session.
-    /// </summary>
-    /// <param name="request">Login request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The authentication response.</returns>
-    /// <exception cref="OperationCanceledException">
-    /// Thrown when cancellation is requested through <paramref name="cancellationToken"/>.
-    /// </exception>
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown when the underlying client has been disposed.
-    /// </exception>
-    public async Task<LoginResponse> LoginAsync(
-        LoginRequest request,
-        CancellationToken cancellationToken = default)
+    /// <summary>Human sessions are not part of the Public API v1 developer-credential contract.</summary>
+    public AuthSession? CurrentSession
     {
-        _http.ThrowIfDisposed();
-
-        if (request is null)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "Invalid access request."
-            };
-        }
-
-        var identifier = request.Identifier.Trim();
-
-        if (string.IsNullOrWhiteSpace(identifier))
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "Username or email is required."
-            };
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "Password is required."
-            };
-        }
-
-        if (!IsEmail(identifier))
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "Legacy username authentication is no longer supported. Use an email address."
-            };
-        }
-
-        try
-        {
-            var email = identifier.ToLowerInvariant();
-
-            var session = await _http.PostAsync<AuthSession>(
-    "/auth/v1/token?grant_type=password",
-    new
-    {
-        email,
-        password = request.Password
-    },
-    cancellationToken);
-
-            if (session?.IsValid != true)
-            {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Error = "Server did not return a valid session."
-                };
-            }
-
-            CurrentSession = session;
-            _http.SetAccessToken(session.AccessToken);
-
-            return new LoginResponse
-            {
-                Success = true,
-                Session = session
-            };
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (HttpRequestException exception)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = $"Authentication failed: {exception.Message}"
-            };
-        }
-        catch (Exception exception)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = $"Unexpected error during authentication: {exception.Message}"
-            };
-        }
+        get { _http.ThrowIfDisposed(); return null; }
     }
 
-    private static bool IsEmail(string value)
+    /// <summary>Always false because developer credentials are not human login sessions.</summary>
+    public bool IsAuthenticated
     {
-        return Regex.IsMatch(
-            value.Trim(),
-            @"^[^\s@]+@[^\s@]+\.[^\s@]+$",
-            RegexOptions.CultureInvariant);
+        get { _http.ThrowIfDisposed(); return false; }
     }
 
-    
-
-    /// <summary>
-    /// Refreshes the current authenticated session using its refresh token.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>
-    /// The refreshed authentication response.
-    /// </returns>
-    /// <exception cref="OperationCanceledException">
-    /// Thrown when cancellation is requested through <paramref name="cancellationToken"/>.
-    /// </exception>
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown when the underlying client has been disposed.
-    /// </exception>
-    public async Task<LoginResponse> RefreshAsync(
-        CancellationToken cancellationToken = default)
+    [Obsolete("Email/password login is not supported by the Public API v1 SDK. Use DeveloperCredential.")]
+    public Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
-
-        var refreshToken = CurrentSession?.RefreshToken?.Trim();
-
-        if (string.IsNullOrWhiteSpace(refreshToken))
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new LoginResponse
         {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "No refresh token is available."
-            };
-        }
-
-        try
-        {
-            var session = await _http.PostAsync<AuthSession>(
-                "/auth/v1/token?grant_type=refresh_token",
-                new
-                {
-                    refresh_token = refreshToken
-                },
-                cancellationToken);
-
-            if (session?.IsValid != true)
-            {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Error = "The server did not return a valid session."
-                };
-            }
-
-            CurrentSession = session;
-            _http.SetAccessToken(session.AccessToken);
-
-            return new LoginResponse
-            {
-                Success = true,
-                Session = session
-            };
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (HttpRequestException exception)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = $"Session update failed: {exception.Message}"
-            };
-        }
-        catch (Exception exception)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = $"Unexpected error while updating the session: {exception.Message}"
-            };
-        }
+            Success = false,
+            Error = "Human email/password authentication is not supported by the Clientus Public API v1 SDK."
+        });
     }
 
-    /// <summary>
-    /// Gets the currently authenticated user.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The current authenticated user, or <see langword="null"/> if no session exists.</returns>
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown when the underlying client has been disposed.
-    /// </exception>
-    public async Task<AuthUser?> GetCurrentUserAsync(
-    CancellationToken cancellationToken = default)
+    [Obsolete("Session refresh is not supported by the Public API v1 SDK.")]
+    public Task<LoginResponse> RefreshAsync(CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
-
-        if (!IsAuthenticated)
-            return null;
-
-        return await _http.GetAsync<AuthUser>(
-            "/auth/v1/user",
-            cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new LoginResponse
+        {
+            Success = false,
+            Error = "Human session refresh is not supported by the Clientus Public API v1 SDK."
+        });
     }
 
-    /// <summary>
-    /// Logs out the current user and clears the local session.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown when the underlying client has been disposed.
-    /// </exception>
-    public async Task LogoutAsync(
-    CancellationToken cancellationToken = default)
+    [Obsolete("Human authenticated-user lookup is not supported by the Public API v1 SDK. Use Users.GetCurrentAsync().")]
+    public Task<AuthUser?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<AuthUser?>(null);
+    }
 
-        if (CurrentSession?.AccessToken is not null)
-        {
-            try
-            {
-                await _http.PostAsync<object?>(
-                    "/auth/v1/logout",
-                    new { },
-                    cancellationToken);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch
-            {
-                // Elimina comunque la sessione locale.
-            }
-        }
-
-        CurrentSession = null;
-        _http.SetAccessToken(null);
+    [Obsolete("Human logout is not applicable to developer credentials.")]
+    public Task LogoutAsync(CancellationToken cancellationToken = default)
+    {
+        _http.ThrowIfDisposed();
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.CompletedTask;
     }
 }

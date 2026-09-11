@@ -2,105 +2,57 @@ using Clientus.ApiClient.Http;
 
 namespace Clientus.ApiClient.Invoices;
 
-/// <summary>Provides authenticated, RLS-controlled invoice read and delete operations.</summary>
-/// <remarks>
-/// Creation, editing, status changes, conversions, payment recording, installment/deposit generation,
-/// QR generation, public-token access, email, and document workflows are intentionally unavailable:
-/// their verified contracts require server orchestration or server-side effects that direct PostgREST
-/// requests cannot faithfully reproduce.
-/// </remarks>
+/// <summary>Read-only invoice operations exposed by Clientus Public API v1.</summary>
 public class InvoicesService
 {
-    private const string InvoiceFields =
-        "id,company_id,client_id,quote_id,created_by,number,title,notes,status,currency,subtotal," +
-        "tax_rate,tax_amount,total,issued_at,due_at,sent_at,paid_at,client_snapshot,public_token," +
-        "kind,parent_quote_id,deposit_percentage,deposit_of_amount,qr_reference,paid_amount," +
-        "remaining_amount,discount_kind,discount_value,discount_scope,discount_amount," +
-        "installment_plan_id,installment_number,installment_total,parent_invoice_id," +
-        "installment_cadence,installment_state,is_installment_source,payment_method,payment_link_url," +
-        "stripe_checkout_session_id,stripe_payment_intent_id,payment_amount,payment_currency," +
-        "payment_terms_days,payment_account_id,payment_account_snapshot,pdf_storage_path," +
-        "reminders_sent,work_report_id,subscription_id,subscription_cycle_id,created_at,updated_at";
-
-    private const string ItemFields =
-        "id,invoice_id,catalog_item_id,description,quantity,unit,unit_price,line_total,position," +
-        "line_kind,price_tax_mode_snapshot,vat_rate_snapshot,discount_snapshot,unit_price_input," +
-        "unit_price_net,unit_price_gross,net_amount,vat_amount,gross_amount,created_at";
-
     private readonly IClientusApiTransport _http;
-
-    /// <summary>Initializes the invoice service with an authenticated transport.</summary>
-    public InvoicesService(ClientusHttpClient http)
-        : this((IClientusApiTransport)http)
-    {
-    }
-
+    public InvoicesService(ClientusHttpClient http) : this((IClientusApiTransport)http) { }
     internal InvoicesService(IClientusApiTransport http)
     {
         ArgumentNullException.ThrowIfNull(http);
         _http = http;
     }
 
-    /// <summary>Gets one invoice visible to the authenticated caller through RLS.</summary>
-    public async Task<Invoice?> GetAsync(string id, CancellationToken cancellationToken = default)
+    public Task<Invoice?> GetAsync(string id, CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
-        var rows = await _http.GetAsync<List<Invoice>>(
-            $"/rest/v1/invoices?select={InvoiceFields}&{ExactId(id)}&limit=1", cancellationToken);
-        return rows?.FirstOrDefault();
+        ValidateId(id);
+        return _http.GetAsync<Invoice>($"/api/v1/invoices/{Uri.EscapeDataString(id)}", cancellationToken);
     }
 
-    /// <summary>Gets one RLS-visible invoice and its RLS-visible items ordered by position.</summary>
-    public async Task<InvoiceWithItems?> GetWithItemsAsync(string id, CancellationToken cancellationToken = default)
-    {
-        var invoice = await GetAsync(id, cancellationToken);
-        if (invoice is null) return null;
-
-        var items = await _http.GetAsync<List<InvoiceItem>>(
-            $"/rest/v1/invoice_items?select={ItemFields}&{PostgRestQuery.ExactFilter("invoice_id", id, nameof(id))}&order=position.asc",
-            cancellationToken);
-        return new InvoiceWithItems(invoice, items ?? []);
-    }
-
-    /// <summary>Lists all invoices visible through RLS, newest creation first.</summary>
     public async Task<IReadOnlyList<Invoice>> ListAsync(CancellationToken cancellationToken = default)
     {
         _http.ThrowIfDisposed();
-        var rows = await _http.GetAsync<List<Invoice>>(
-            $"/rest/v1/invoices?select={InvoiceFields}&order=created_at.desc", cancellationToken);
-        return PostgRestQuery.OrEmpty(rows);
+        return await _http.GetAsync<List<Invoice>>("/api/v1/invoices", cancellationToken) ?? [];
     }
 
-    /// <summary>Determines whether an exact invoice identifier is visible through RLS.</summary>
-    public async Task<bool> ExistsAsync(string id, CancellationToken cancellationToken = default)
-    {
-        _http.ThrowIfDisposed();
-        var rows = await _http.GetAsync<List<InvoiceIdentity>>(
-            $"/rest/v1/invoices?select=id&{ExactId(id)}&limit=1", cancellationToken);
-        return rows?.Count > 0;
-    }
+    [Obsolete("Invoice item expansion is not yet exposed by Public API v1.")]
+    public Task<InvoiceWithItems?> GetWithItemsAsync(string id, CancellationToken cancellationToken = default) =>
+        Unsupported<InvoiceWithItems?>(cancellationToken, "Invoice item expansion");
 
-    /// <summary>Gets the exact RLS-visible invoice count using a retryable HEAD request.</summary>
-    public Task<long> CountAsync(CancellationToken cancellationToken = default)
-    {
-        _http.ThrowIfDisposed();
-        return _http.HeadCountAsync("/rest/v1/invoices?select=id", cancellationToken);
-    }
+    [Obsolete("Invoice existence probes are not yet exposed by Public API v1.")]
+    public Task<bool> ExistsAsync(string id, CancellationToken cancellationToken = default) =>
+        Unsupported<bool>(cancellationToken, "Invoice existence");
 
-    /// <summary>
-    /// Deletes an exact RLS-visible invoice. Items and deposit links cascade. References configured
-    /// with SET NULL are detached. Company-document rows and storage objects do not cascade and are
-    /// not deleted by this operation. Transient DELETE failures may be retried.
-    /// </summary>
+    [Obsolete("Invoice exact counts are not yet exposed by Public API v1.")]
+    public Task<long> CountAsync(CancellationToken cancellationToken = default) =>
+        Unsupported<long>(cancellationToken, "Invoice count");
+
+    [Obsolete("Invoice deletion is not yet exposed by Public API v1.")]
     public Task DeleteAsync(string id, CancellationToken cancellationToken = default)
     {
-        _http.ThrowIfDisposed();
-        return _http.DeleteAsync($"/rest/v1/invoices?{ExactId(id)}", cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new NotSupportedException("Invoice deletion is not available in Clientus Public API v1.");
     }
 
     internal void ThrowIfDisposed() => _http.ThrowIfDisposed();
-
-    private static string ExactId(string id) => PostgRestQuery.ExactFilter("id", id, nameof(id));
-
-    private sealed class InvoiceIdentity { public string Id { get; set; } = string.Empty; }
+    private static void ValidateId(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("An invoice identifier is required.", nameof(id));
+    }
+    private static Task<T> Unsupported<T>(CancellationToken token, string operation)
+    {
+        token.ThrowIfCancellationRequested();
+        throw new NotSupportedException($"{operation} is not available in Clientus Public API v1.");
+    }
 }

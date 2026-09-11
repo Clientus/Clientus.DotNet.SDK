@@ -1,14 +1,19 @@
 # Basic console application
 
-This example uses current legacy connectivity to authenticate with Clientus and list customers
-visible to the authenticated user through Supabase row-level security. It is not a Public API v1 or
-developer-credential example; those contracts are not available yet.
+This example uses Clientus Public API v1 with an opaque developer credential.
 
-Set `CLIENTUS_BASE_URL`, `CLIENTUS_API_KEY`, `CLIENTUS_IDENTIFIER`, and `CLIENTUS_PASSWORD`, then run:
+Set these server-side environment variables:
+
+- `CLIENTUS_BASE_URL`
+- `CLIENTUS_DEVELOPER_CREDENTIAL`
+
+Then run:
 
 ```powershell
 dotnet run --project examples/BasicConsoleApp/BasicConsoleApp.csproj
 ```
 
-Use a publishable/anonymous project key. Never use a Supabase service-role credential in an
-application.
+The example uses the sandbox environment. A sandbox credential cannot become a live credential, and
+live access still requires server-side Clientus approval.
+
+Never commit a developer credential and never embed one in browser or mobile application source.

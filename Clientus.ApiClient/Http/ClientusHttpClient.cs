@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using System.Text;
 using Clientus.ApiClient.Configuration;
 using Clientus.ApiClient.Common;
@@ -65,10 +65,15 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
                 nameof(configuration.BaseUrl));
         }
 
-        if (string.IsNullOrWhiteSpace(configuration.ApiKey))
+        if (string.IsNullOrWhiteSpace(configuration.DeveloperCredential))
             throw new ArgumentException(
-                "ApiKey is not configured.",
-                nameof(configuration.ApiKey));
+                "DeveloperCredential is not configured.",
+                nameof(configuration.DeveloperCredential));
+
+        if (!Enum.IsDefined(configuration.Environment))
+            throw new ArgumentOutOfRangeException(
+                nameof(configuration.Environment),
+                "Environment must be Sandbox or Live.");
 
         if (configuration.Timeout != Timeout.InfiniteTimeSpan && configuration.Timeout <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(configuration.Timeout), "Timeout must be positive or infinite.");
@@ -93,7 +98,10 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
         _httpClient.BaseAddress = baseUri;
         _httpClient.Timeout = configuration.Timeout;
 
-        _httpClient.DefaultRequestHeaders.Add("apikey", configuration.ApiKey);
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                configuration.DeveloperCredential.Trim());
         _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(GetUserAgent());
     }
 
@@ -161,9 +169,8 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
             throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
-        return await response.Content.ReadFromJsonAsync<T>(
-     JsonHelper.SerializerOptions,
-     cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        return PublicApiJson.Deserialize<T>(responseBody);
     }
 
     /// <summary>
@@ -216,9 +223,8 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
             throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
-        return await response.Content.ReadFromJsonAsync<T>(
-    JsonHelper.SerializerOptions,
-    cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        return PublicApiJson.Deserialize<T>(responseBody);
     }
 
     /// <summary>
@@ -267,9 +273,8 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
             throw await CreateApiExceptionAsync(response, cancellationToken);
         }
 
-        return await response.Content.ReadFromJsonAsync<T>(
-            JsonHelper.SerializerOptions,
-            cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        return PublicApiJson.Deserialize<T>(responseBody);
     }
 
     /// <summary>
@@ -491,19 +496,12 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
     /// <exception cref="ObjectDisposedException">
     /// Thrown when this instance has been disposed.
     /// </exception>
+    [Obsolete("Human access-token mutation is not supported by the Public API v1 SDK.")]
     public void SetAccessToken(string? accessToken)
     {
         ThrowIfDisposed();
-
-        _httpClient.DefaultRequestHeaders.Authorization = null;
-
-        if (string.IsNullOrWhiteSpace(accessToken))
-            return;
-
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue(
-                "Bearer",
-                accessToken);
+        throw new NotSupportedException(
+            "Clientus Public API v1 authenticates with the configured developer credential.");
     }
 
     /// <inheritdoc />
@@ -523,12 +521,18 @@ public class ClientusHttpClient : IDisposable, IClientusApiTransport
     }
 
     void IClientusApiTransport.ThrowIfDisposed() => ThrowIfDisposed();
-
     private static void ValidateEndpoint(string endpoint)
     {
         if (string.IsNullOrWhiteSpace(endpoint))
         {
             throw new ArgumentException("An API endpoint is required.", nameof(endpoint));
+        }
+
+        if (!endpoint.StartsWith("/api/v1/", StringComparison.Ordinal) &&
+            !string.Equals(endpoint, "/api/v1", StringComparison.Ordinal))
+        {
+            throw new NotSupportedException(
+                "Clientus SDK Public API mode only permits versioned /api/v1 endpoints.");
         }
     }
 }

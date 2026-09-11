@@ -1,56 +1,44 @@
-﻿namespace Clientus.ApiClient.Configuration;
+namespace Clientus.ApiClient.Configuration;
 
-/// <summary>
-/// Represents the configuration used to connect to the Clientus API.
-/// </summary>
+/// <summary>Clientus Public API environment selected by the SDK consumer.</summary>
+public enum ClientusEnvironment
+{
+    /// <summary>Developer sandbox environment.</summary>
+    Sandbox = 0,
+
+    /// <summary>Live environment. The server still requires explicit live eligibility.</summary>
+    Live = 1
+}
+
+/// <summary>Configuration used to connect to Clientus Public API v1.</summary>
 public class ClientusConfiguration
 {
-    /// <summary>
-    /// Gets or sets the Clientus API base URL.
-    /// The value must be an absolute HTTP or HTTPS URL.
-    /// </summary>
+    /// <summary>Gets or sets the Clientus API base URL.</summary>
     public string BaseUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the legacy Supabase publishable key.
-    /// Never use a Supabase service-role key in an SDK application.
-    /// This property will not become the future Public API developer-credential contract.
+    /// Gets or sets the opaque developer credential issued by Clientus.
+    /// Store this only in server-side secret storage and never in browser/mobile source code.
     /// </summary>
+    public string DeveloperCredential { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the intended Clientus environment. Credentials remain server-bound to their
+    /// actual environment; this value does not elevate or convert a credential.
+    /// </summary>
+    public ClientusEnvironment Environment { get; set; } = ClientusEnvironment.Sandbox;
+
+    /// <summary>
+    /// Legacy Supabase publishable keys are no longer accepted by the Public API v1 transport.
+    /// This property remains only for source compatibility during the beta transition.
+    /// </summary>
+    [Obsolete("ApiKey is no longer used. Configure DeveloperCredential for Clientus Public API v1.")]
     public string ApiKey { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Gets or sets the HTTP request timeout.
-    /// The value must be positive or <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.
-    /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
-
-    /// <summary>
-    /// Gets or sets the maximum number of retry attempts for transient failures.
-    /// The positive value includes the initial request.
-    /// </summary>
     public int MaxRetryAttempts { get; set; } = 3;
-
-    /// <summary>
-    /// Gets or sets the initial delay between retry attempts.
-    /// The non-negative delay increases progressively for each retry.
-    /// </summary>
     public TimeSpan InitialRetryDelay { get; set; } = TimeSpan.FromMilliseconds(500);
-
-    /// <summary>
-    /// Gets or sets the maximum delay honored between safe-method retry attempts, including a
-    /// server-supplied <c>Retry-After</c> value. The value must be non-negative.
-    /// </summary>
     public TimeSpan MaximumRetryDelay { get; set; } = TimeSpan.FromSeconds(30);
-
-    /// <summary>
-    /// Gets or sets an optional HTTP message handler used to construct the SDK-owned
-    /// <see cref="HttpClient"/>. The handler is disposed with the SDK client by default.
-    /// </summary>
     public HttpMessageHandler? HttpMessageHandler { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the optional <see cref="HttpMessageHandler"/>
-    /// is disposed when the SDK client is disposed.
-    /// </summary>
     public bool DisposeHttpMessageHandler { get; set; } = true;
 }

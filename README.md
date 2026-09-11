@@ -1,320 +1,62 @@
-# Clientus SDK for .NET
+# Clientus .NET SDK
 
-The official Clientus SDK for developers building integrations and solutions connected to the
-Clientus ecosystem. The current beta provides authenticated, RLS-controlled access through the
-verified Clientus backend contracts.
+Clientus .NET SDK is the prerelease .NET 8 client for the Clientus Public API v1.
 
-> **Pre-release connectivity notice:** version 1.0.0-beta.2 still uses legacy Supabase Auth and
-> PostgREST connectivity. This is not the intended long-term third-party API contract. Clientus
-> Public API v1, developer credentials, application scopes, and environment selection are not yet
-> available. This release provides transition foundations without inventing future endpoints.
+## Current beta contract
 
-## Current status
+The SDK now uses the versioned Clientus Public API instead of direct Supabase/PostgREST access.
 
-| | |
-|---|---|
-| Version | Beta (`1.0.0-beta.2`) |
-| First release | 14 July 2026 |
-| Target framework | .NET 8 (`net8.0`) |
+Authentication uses an opaque **developer credential**:
 
-Local NuGet package generation is supported. Public NuGet distribution has not been verified and is
-planned for a later release.
+```csharp
+using var client = new ClientusClient(new ClientusConfiguration
+{
+    BaseUrl = "https://your-clientus-host",
+    DeveloperCredential = Environment.GetEnvironmentVariable("CLIENTUS_DEVELOPER_CREDENTIAL")!,
+    Environment = ClientusEnvironment.Sandbox
+});
+```
 
-## Available features
+The credential is sent as:
 
-- **Clientus client:** validated configuration, shared HTTP transport, bearer authentication,
-  retries for safe requests, cancellation, error handling, and deterministic disposal.
-- **Authentication:** login, session refresh, current authenticated user, and logout.
-- **Customers:** customer listing, search, details, update of verified fields, existence, count, and
-  deletion.
-- **Users:** current profile lookup by authenticated user identifier and profile search.
-- **Catalog:** verified reads, search, categories, update, existence, count, and deletion.
-- **Quotes:** reads with line items, existence, count, and deletion. Direct status mutation is disabled.
-- **Invoices:** reads with line items, existence, count, and deletion.
+`Authorization: Bearer <developer-credential>`
+
+Never embed developer credentials in browser or mobile application source.
+
+## Public API v1 scope
+
+The current private-beta SDK exposes read-only access to:
+
+- current developer/company context (`profile:read`)
+- customers (`clients:read`)
+- catalog (`catalog:read`)
+- quotes (`quotes:read`)
+- invoices (`invoices:read`)
+
+The nine current versioned routes are:
+
+- `/api/v1/me`
+- `/api/v1/customers`
+- `/api/v1/customers/{id}`
+- `/api/v1/catalog`
+- `/api/v1/catalog/{id}`
+- `/api/v1/quotes`
+- `/api/v1/quotes/{id}`
+- `/api/v1/invoices`
+- `/api/v1/invoices/{id}`
+
+## Sandbox and live
+
+Use `ClientusEnvironment.Sandbox` during development. Live access remains controlled server-side by Clientus and cannot be enabled by changing the SDK configuration value alone.
+
+## Retired legacy behavior
+
+Direct `/rest/v1` PostgREST access, `/auth/v1` end-user login, Supabase publishable keys, arbitrary user searches, direct mutations, destructive operations, direct quote status transitions, list counts, and other unversioned legacy methods are not part of the Public API v1 contract.
+
+Where old public method signatures are retained for source compatibility, they are marked obsolete and fail closed without sending a network request.
 
 ## Installation
 
-NuGet public distribution: **Coming soon**.
+During private beta, install from the prerelease NuGet package supplied by Clientus. Public NuGet publication is handled by the next release phase.
 
-Until a public package is announced, build a local package:
-
-```powershell
-dotnet pack Clientus.ApiClient/Clientus.ApiClient.csproj
-dotnet add package Clientus.ApiClient --source Clientus.ApiClient/bin/Release
-```
-
-Do not treat the package ID as proof that the package is already available from nuget.org.
-
-## Basic configuration
-
-```csharp
-using Clientus.ApiClient;
-using Clientus.ApiClient.Configuration;
-
-using var client = new ClientusClient(new ClientusConfiguration
-{
-    BaseUrl = "https://your-clientus-backend.example",
-    ApiKey = "your-supabase-anon-key",
-    Timeout = TimeSpan.FromSeconds(30),
-    MaxRetryAttempts = 3,
-    InitialRetryDelay = TimeSpan.FromMilliseconds(500),
-    MaximumRetryDelay = TimeSpan.FromSeconds(30)
-});
-```
-
-`BaseUrl` must be an absolute HTTP or HTTPS URL. `ApiKey` is the legacy public/anonymous project key. Never
-embed a Supabase service-role key in a client application.
-
-## Authentication overview
-
-Legacy authentication supports email login, session refresh, current-user lookup, and logout.
-Successful login installs the bearer access token on the shared transport.
-
-Username login is no longer supported. Its former anonymous lookup RPC is not available under the
-current backend security contract, so username input fails locally without making a network request.
-
-```csharp
-using Clientus.ApiClient.Authentication.Models;
-
-var login = await client.Auth.LoginAsync(new LoginRequest
-{
-    Identifier = "developer@example.com",
-    Password = "secret"
-});
-
-if (!login.Success)
-    throw new InvalidOperationException(login.Error);
-
-var currentUser = await client.Auth.GetCurrentUserAsync();
-```
-
-## Quick start
-
-```csharp
-using Clientus.ApiClient;
-using Clientus.ApiClient.Authentication.Models;
-using Clientus.ApiClient.Configuration;
-
-using var client = new ClientusClient(new ClientusConfiguration
-{
-    BaseUrl = "https://your-clientus-backend.example",
-    ApiKey = "your-supabase-publishable-key"
-});
-
-var login = await client.Auth.LoginAsync(new LoginRequest
-{
-    Identifier = "developer@example.com",
-    Password = "your-password"
-});
-
-if (!login.Success)
-    throw new InvalidOperationException(login.Error);
-
-var customers = await client.Customers.GetAllAsync();
-```
-
-Every service operation accepts an optional `CancellationToken` as its final argument.
-
-## Catalog examples
-
-```csharp
-using Clientus.ApiClient.Catalog;
-
-var item = await client.Catalog.GetAsync(itemId, cancellationToken);
-var items = await client.Catalog.ListAsync(cancellationToken);
-var products = await client.Catalog.GetByTypeAsync(CatalogItemType.Product, cancellationToken);
-var matches = await client.Catalog.SearchAsync(
-    "valve", limit: 20, type: CatalogItemType.Product, cancellationToken: cancellationToken);
-var categories = await client.Catalog.ListCategoriesAsync(cancellationToken);
-var exists = await client.Catalog.ExistsAsync(itemId, cancellationToken);
-var count = await client.Catalog.CountAsync(cancellationToken);
-
-if (item is not null)
-{
-    item.Price = 12.50m;
-    item = await client.Catalog.UpdateAsync(item, cancellationToken);
-}
-
-await client.Catalog.DeleteAsync(itemId, cancellationToken);
-```
-
-Creation is not exposed because the verified server workflow resolves or creates the company and
-supplies protected tenant and creator fields. Catalog items have no verified active, inventory, or
-stock field.
-
-## Customers examples
-
-```csharp
-var customers = await client.Customers.GetAllAsync(limit: 50, cancellationToken: cancellationToken);
-var customer = await client.Customers.GetByIdAsync(customerId, cancellationToken);
-var matches = await client.Customers.SearchAsync("Ada", limit: 20, cancellationToken: cancellationToken);
-var exists = await client.Customers.ExistsAsync(customerId, cancellationToken);
-var count = await client.Customers.CountAsync(cancellationToken);
-
-if (customer is not null)
-{
-    customer.Phone = "+41 00 000 00 00";
-    customer = await client.Customers.UpdateAsync(customer, cancellationToken);
-}
-
-await client.Customers.DeleteAsync(customerId, cancellationToken);
-```
-
-Customer creation is not exposed. `UpdateAsync` sends only the supported contact/profile fields;
-`Id`, `CompanyId`, and `CreatedAt` are selection/protected fields and are not included in its PATCH.
-
-## Quotes examples
-
-```csharp
-using Clientus.ApiClient.Quotes;
-
-var quote = await client.Quotes.GetAsync(quoteId, cancellationToken);
-var quoteWithItems = await client.Quotes.GetWithItemsAsync(quoteId, cancellationToken);
-var quotes = await client.Quotes.ListAsync(cancellationToken);
-var exists = await client.Quotes.ExistsAsync(quoteId, cancellationToken);
-var count = await client.Quotes.CountAsync(cancellationToken);
-
-await client.Quotes.DeleteAsync(quoteId, cancellationToken);
-```
-
-Quote items are loaded with a second request and returned in ascending position order.
-`UpdateStatusAsync` remains in the public API for compatibility but is obsolete and fails closed:
-the current Clientus workflow cannot safely be reproduced through a direct table PATCH. See
-[Modules](Clientus.ApiClient/docs/MODULES.md#quotes) for deletion limitations.
-
-## Invoices examples
-
-```csharp
-var invoice = await client.Invoices.GetAsync(invoiceId, cancellationToken);
-var invoiceWithItems = await client.Invoices.GetWithItemsAsync(invoiceId, cancellationToken);
-var invoices = await client.Invoices.ListAsync(cancellationToken);
-var exists = await client.Invoices.ExistsAsync(invoiceId, cancellationToken);
-var count = await client.Invoices.CountAsync(cancellationToken);
-
-await client.Invoices.DeleteAsync(invoiceId, cancellationToken);
-```
-
-Invoice status mutation is intentionally unavailable because the verified backend workflow includes
-payment-trigger and automation effects that a direct PATCH cannot reproduce.
-
-## Retry behavior
-
-The transport may retry GET, HEAD, and DELETE after HTTP 408, 429, 502, 503, or 504. The configured
-`MaxRetryAttempts` includes the initial request, and each retry creates a fresh request. A valid
-server `Retry-After` value is honored up to `MaximumRetryDelay`; otherwise the deterministic
-progressive delay is used and capped by the same value. POST and PATCH are never retried.
-Cancellation and non-transient failures are never retried.
-
-DELETE retry safety describes transport behavior; authorization and final visibility remain backend
-concerns.
-
-## Cancellation
-
-Pass a token to any asynchronous operation. Cancellation produces `OperationCanceledException` and
-is not converted into a retry or an `ApiException`.
-
-## Error handling
-
-```csharp
-using Clientus.ApiClient.Common;
-
-try
-{
-    var quote = await client.Quotes.GetAsync(quoteId, cancellationToken);
-}
-catch (ApiException exception)
-{
-    Console.Error.WriteLine($"HTTP {(int)exception.StatusCode}: {exception.ResponseBody}");
-}
-catch (OperationCanceledException)
-{
-    Console.Error.WriteLine("The request was cancelled.");
-}
-```
-
-Validation uses standard .NET exceptions. Successful count responses without a valid exact
-`Content-Range` produce `InvalidOperationException`.
-
-## Security, RLS, and tenant isolation
-
-- SDK service requests are authenticated after a successful login.
-- Supabase row-level security (RLS) determines which tenant rows are visible or mutable.
-- The SDK does not bypass RLS and does not provide service-role behavior.
-- Supported workflows do not let callers arbitrarily choose `company_id`.
-- Public-token and service-role routes are intentionally not exposed.
-- Direct database access is outside the SDK contract.
-
-## Disposal and lifecycle
-
-`ClientusClient` owns one shared HTTP transport. `Auth`, `Catalog`, `Customers`, `Quotes`, `Invoices`, and
-`Users` return stable service instances. Dispose the parent client with `using`; the SDK implements
-`IDisposable`, not `IAsyncDisposable`. Access after disposal throws `ObjectDisposedException`.
-
-## Supported operations matrix
-
-| Module | Supported operations |
-|---|---|
-| Authentication | `LoginAsync`, `RefreshAsync`, `GetCurrentUserAsync`, `LogoutAsync` |
-| Catalog | `GetAsync`, `ListAsync`, `GetByTypeAsync`, `SearchAsync`, `ListCategoriesAsync`, `ExistsAsync`, `CountAsync`, `UpdateAsync`, `DeleteAsync` |
-| Customers | `GetAllAsync`, `GetByIdAsync`, `SearchAsync`, `UpdateAsync`, `DeleteAsync`, `ExistsAsync`, `CountAsync` |
-| Quotes | `GetAsync`, `GetWithItemsAsync`, `ListAsync`, `ExistsAsync`, `CountAsync`, `UpdateStatusAsync`, `DeleteAsync` |
-| Invoices | `GetAsync`, `GetWithItemsAsync`, `ListAsync`, `ExistsAsync`, `CountAsync`, `DeleteAsync` |
-| Users | Existing user lookup service; not expanded as part of the domain-service roadmap |
-
-## Intentionally unavailable operations
-
-The SDK does not expose catalog creation, category mutation, active/stock/inventory operations;
-customer creation; quote creation or generic editing; invoice creation,
-editing, or status mutation; quote/work-report conversion; numbering; payments; QR Bill/IBAN
-generation; deposits; installment generation; public-token flows; attachment mutation; PDF/document
-generation; or email sending. These require contracts or server orchestration not represented by the
-current authenticated SDK surface.
-
-## Package contents
-
-`Clientus.ApiClient` packages contain the `net8.0` assembly, XML API documentation, this README, and
-the package icon. Packing also creates a `.snupkg` symbol package with portable PDBs. Source Link,
-repository metadata, deterministic builds, nullable annotations, and embedded untracked sources are
-configured centrally.
-
-## Testing and build
-
-```powershell
-dotnet test Clientus.DotNet.sln
-dotnet build Clientus.DotNet.sln
-dotnet pack Clientus.ApiClient/Clientus.ApiClient.csproj
-```
-
-Package output is under `Clientus.ApiClient/bin/Release/`. The test suite uses deterministic HTTP
-handlers and does not require live credentials or external services.
-
-## Release checklist
-
-- Run tests, build, pack, and `git diff --check`.
-- Confirm zero build warnings/errors and inspect both `.nupkg` and `.snupkg`.
-- Validate XML documentation, README, icon, repository metadata, and Source Link.
-- Review public API compatibility and the changelog.
-- Verify backend contracts for every newly exposed operation.
-- Publish only through the project’s approved release process.
-
-## Documentation and roadmap
-
-- [Documentation index](Clientus.ApiClient/docs/README.md)
-- [Module reference](Clientus.ApiClient/docs/MODULES.md)
-- [Public roadmap](Clientus.ApiClient/docs/ROADMAP.md)
-- [Detailed engineering roadmap](SDK-ROADMAP.md)
-- [Basic console example](examples/BasicConsoleApp/README.md)
-
-## Developer roadmap
-
-- **2026 — SDK Foundation:** complete for the currently verified modules.
-- **Future — More modules:** added only after their backend contracts are verified.
-- **Future — Public APIs:** planned; no Developer API keys, OAuth, or sandbox are exposed today.
-- **Future — Marketplace integrations:** planned after the Developer Platform contract exists.
-
-## Contributing and license
-
-No public contribution process or standalone license file is currently defined in this repository.
-Coordinate changes with the Clientus maintainers and do not assume permission beyond the repository’s
-configured copyright and ownership terms. Repository metadata points to
-[Clientus.DotNet.SDK](https://github.com/Clientus/Clientus.DotNet.SDK).
+See `examples/BasicConsoleApp` for a minimal sandbox example.

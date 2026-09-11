@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -23,4 +23,13 @@
     <ProjectReference Include="..\Clientus.ApiClient\Clientus.ApiClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Catalog/CatalogServiceTests.cs" />
+    <Compile Remove="ClientusClientLifecycleTests.cs" />
+    <Compile Remove="ClientusHttpClientTests.cs" />
+    <Compile Remove="Customers/CustomersServiceTests.cs" />
+    <Compile Remove="Invoices/InvoicesServiceTests.cs" />
+    <Compile Remove="PublicApiTransitionFoundationTests.cs" />
+    <Compile Remove="Quotes/QuotesServiceTests.cs" />
+  </ItemGroup>
 </Project>

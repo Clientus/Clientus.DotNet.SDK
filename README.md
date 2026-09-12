@@ -60,3 +60,27 @@ Where old public method signatures are retained for source compatibility, they a
 During private beta, install from the prerelease NuGet package supplied by Clientus. Public NuGet publication is handled by the next release phase.
 
 See `examples/BasicConsoleApp` for a minimal sandbox example.
+
+## Developer bearer authentication
+
+The public SDK uses Clientus Developer credentials against Public API v1.
+
+Credentials are app- and environment-specific. Human end-user authentication is not the public Developer API contract.
+
+## First call
+
+```csharp
+var configuration = new ClientusConfiguration
+{
+    BaseUrl = new Uri("https://clientus.app"),
+    ApiKey = "<developer_credential>",
+};
+
+using var client = new ClientusClient(configuration);
+```
+
+Use `client.Ai` for Clientus Intelligence / Lumi. Provider selection and credentials stay server-side.
+
+Use `WebhookSignatureVerifier.Verify(...)` before processing webhook deliveries.
+
+The SDK does not grant entitlement. Activate the required API Pack in the Developer Portal.

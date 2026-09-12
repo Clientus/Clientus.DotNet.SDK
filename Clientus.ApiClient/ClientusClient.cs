@@ -1,3 +1,4 @@
+using Clientus.ApiClient.Ai;
 using Clientus.ApiClient.Authentication;
 using Clientus.ApiClient.Catalog;
 using Clientus.ApiClient.Configuration;
@@ -19,6 +20,9 @@ namespace Clientus.ApiClient;
 /// </remarks>
 public class ClientusClient : IDisposable
 {
+    /// <summary>Gets the Clientus Intelligence / Lumi Developer API service.</summary>
+    public AiService Ai { get; }
+
     private readonly ClientusHttpClient _http;
     private readonly AuthService _auth;
     private readonly CatalogService _catalog;
@@ -127,6 +131,7 @@ public class ClientusClient : IDisposable
     public ClientusClient(ClientusConfiguration configuration)
     {
         _http = new ClientusHttpClient(configuration);
+        Ai = new AiService(_http);
 
         _auth = new AuthService(_http);
         _catalog = new CatalogService(_http);

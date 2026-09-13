@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -9,13 +9,13 @@
 
     <PackageId>Clientus.Core</PackageId>
 
-    <Title>Clientus Core</Title>
+    <Title>Clientus Core — Shared SDK Contracts</Title>
 
-    <Description>Shared models, results and exceptions for the official Clientus .NET SDK.</Description>
+    <Description>Shared contracts, models, results and exceptions for the official Clientus .NET SDK and Clientus Developer Platform integrations.</Description>
 
-    <PackageTags>clientus;sdk;dotnet;api;core</PackageTags>
+    <PackageTags>clientus;dotnet;sdk;api;developer-platform;contracts;models;integration;core</PackageTags>
 
-    <PackageReleaseNotes>Public API v1 transition foundation for shared SDK contracts.</PackageReleaseNotes>
+    <PackageReleaseNotes>Improved NuGet discovery and public Developer Platform metadata for the shared Clientus SDK contracts.</PackageReleaseNotes>
   </PropertyGroup>
 
   
@@ -29,9 +29,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="..\README.md"
+    <None Include="NUGET-README.md"
           Pack="true"
-          PackagePath="\" />
+          PackagePath="README.md" />
 
     <None Include="..\icon.png"
       Pack="true"

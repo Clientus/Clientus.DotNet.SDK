@@ -1,45 +1,27 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <IsPackable>true</IsPackable>
-
     <PackageId>Clientus.ApiClient</PackageId>
-    <Title>Clientus SDK for .NET</Title>
-
-    <Description>Official Clientus SDK for authenticated integrations with the Clientus platform.</Description>
-
-    <PackageTags>Clientus;SDK;API;Integration;Marketplace;dotnet;http;crm</PackageTags>
-
-    <PackageReleaseNotes>Public API v1 transition foundation with fail-closed legacy workflow safety.</PackageReleaseNotes>
+    <Title>Clientus .NET SDK - Public API, Lumi AI &amp; Webhooks</Title>
+    <Description>Official .NET 8 SDK for the Clientus Developer Platform. Build authenticated integrations with Clientus Public API v1, Lumi AI, webhooks, sandbox/live environments and developer credentials.</Description>
+    <PackageTags>clientus;dotnet;sdk;api;developer-platform;integration;ai;lumi;webhooks;marketplace;automation;business;saas</PackageTags>
+    <PackageReleaseNotes>Improved NuGet discovery, public Developer Platform onboarding, updated package metadata and public beta documentation for Clientus Public API v1.</PackageReleaseNotes>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Clientus.Core\Clientus.Core.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Files\" />
     <Folder Include="WorkReports\" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="..\README.md"
-          Pack="true"
-          PackagePath="\" />
-
-    <None Include="..\icon.png"
-      Pack="true"
-      PackagePath="\" />
+    <None Include="NUGET-README.md" Pack="true" PackagePath="README.md" />
+    <None Include="..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub"
-                      Version="8.0.0"
-                      PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
-  
 </Project>

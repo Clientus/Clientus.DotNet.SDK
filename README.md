@@ -1,31 +1,58 @@
 # Clientus .NET SDK
 
-Clientus .NET SDK is the prerelease .NET 8 client for the Clientus Public API v1.
+The official .NET 8 SDK for developers building integrations and applications on the **Clientus Developer Platform**.
 
-## Current beta contract
+The SDK uses **Clientus Public API v1**, scoped developer credentials and server-side authorization. It does not expose Clientus database tables, Supabase Auth, service-role credentials or unversioned PostgREST endpoints as the third-party contract.
 
-The SDK now uses the versioned Clientus Public API instead of direct Supabase/PostgREST access.
+## Public beta
 
-Authentication uses an opaque **developer credential**:
+Current package line:
+
+```text
+Clientus.ApiClient 1.0.0-beta.4
+Clientus.Core      1.0.0-beta.4
+```
+
+Install from NuGet:
+
+```bash
+dotnet add package Clientus.ApiClient --prerelease
+```
+
+Developer Portal:
+
+**https://clientus.app/developer**
+
+Developer status is assigned by Clientus and currently has no monthly membership fee. API access is activated through API Packs and premium service entitlements.
+
+## Authentication
+
+The public SDK uses an opaque **developer credential**:
 
 ```csharp
+using Clientus.ApiClient;
+using Clientus.ApiClient.Configuration;
+
 using var client = new ClientusClient(new ClientusConfiguration
 {
-    BaseUrl = "https://your-clientus-host",
-    DeveloperCredential = Environment.GetEnvironmentVariable("CLIENTUS_DEVELOPER_CREDENTIAL")!,
+    BaseUrl = "https://clientus.app",
+    DeveloperCredential =
+        Environment.GetEnvironmentVariable("CLIENTUS_DEVELOPER_CREDENTIAL")!,
     Environment = ClientusEnvironment.Sandbox
 });
 ```
 
 The credential is sent as:
 
-`Authorization: Bearer <developer-credential>`
+```text
+Authorization: Bearer <developer-credential>
+```
 
 Never embed developer credentials in browser or mobile application source.
 
-## Public API v1 scope
+## Public API v1
 
-The current private-beta SDK exposes read-only access to:
+The current versioned business surfaces include:
 
 - current developer/company context (`profile:read`)
 - customers (`clients:read`)
@@ -33,54 +60,72 @@ The current private-beta SDK exposes read-only access to:
 - quotes (`quotes:read`)
 - invoices (`invoices:read`)
 
-The nine current versioned routes are:
+Scopes, entitlements, quotas and rate limits are enforced server-side.
 
-- `/api/v1/me`
-- `/api/v1/customers`
-- `/api/v1/customers/{id}`
-- `/api/v1/catalog`
-- `/api/v1/catalog/{id}`
-- `/api/v1/quotes`
-- `/api/v1/quotes/{id}`
-- `/api/v1/invoices`
-- `/api/v1/invoices/{id}`
+## Lumi AI
+
+Use `client.Ai` for Clientus Intelligence / Lumi.
+
+AI requests remain subject to Clientus authorization, consent, entitlement and credit authority. Provider selection and provider credentials stay inside Clientus.
+
+## Webhooks
+
+Use:
+
+```csharp
+WebhookSignatureVerifier.Verify(...)
+```
+
+before processing webhook deliveries.
+
+Webhook delivery uses signed versioned events and replay-window verification.
 
 ## Sandbox and live
 
-Use `ClientusEnvironment.Sandbox` during development. Live access remains controlled server-side by Clientus and cannot be enabled by changing the SDK configuration value alone.
+Use `ClientusEnvironment.Sandbox` during development.
+
+Live access remains controlled server-side by Clientus. Selecting the live environment in the SDK does not itself grant production access.
+
+## API Packs
+
+Clientus Developer status currently has no monthly fee.
+
+The commercial model is based on:
+
+- a one-time Core API Pack
+- optional additional API packs
+- premium APIs/services with included usage
+- explicit pay-as-you-go overage after included premium usage
+
+The Clientus server is authoritative for entitlements, metering and billing.
+
+## Marketplace
+
+The Developer Platform includes versioned submissions, Lumi pre-review, Clientus review, Trusted Publishing eligibility, Marketplace purchase entitlements, earnings and payout foundations.
 
 ## Retired legacy behavior
 
-Direct `/rest/v1` PostgREST access, `/auth/v1` end-user login, Supabase publishable keys, arbitrary user searches, direct mutations, destructive operations, direct quote status transitions, list counts, and other unversioned legacy methods are not part of the Public API v1 contract.
+Direct `/rest/v1` PostgREST access, `/auth/v1` end-user login, Supabase publishable keys, arbitrary user searches, direct destructive mutations and other unversioned legacy behavior are not part of Public API v1.
 
-Where old public method signatures are retained for source compatibility, they are marked obsolete and fail closed without sending a network request.
+Legacy public method signatures retained for source compatibility are obsolete and fail closed rather than silently bypassing the public contract.
 
-## Installation
+## Documentation
 
-During private beta, install from the prerelease NuGet package supplied by Clientus. Public NuGet publication is handled by the next release phase.
+- Developer Portal: https://clientus.app/developer
+- Clientus: https://clientus.app
+- Repository: https://github.com/Clientus/Clientus.DotNet.SDK
+- Minimal example: `examples/BasicConsoleApp`
+- SDK documentation: `Clientus.ApiClient/docs`
 
-See `examples/BasicConsoleApp` for a minimal sandbox example.
+## Security principles
 
-## Developer bearer authentication
+The SDK and Developer Platform are designed around:
 
-The public SDK uses Clientus Developer credentials against Public API v1.
-
-Credentials are app- and environment-specific. Human end-user authentication is not the public Developer API contract.
-
-## First call
-
-```csharp
-var configuration = new ClientusConfiguration
-{
-    BaseUrl = new Uri("https://clientus.app"),
-    ApiKey = "<developer_credential>",
-};
-
-using var client = new ClientusClient(configuration);
-```
-
-Use `client.Ai` for Clientus Intelligence / Lumi. Provider selection and credentials stay server-side.
-
-Use `WebhookSignatureVerifier.Verify(...)` before processing webhook deliveries.
-
-The SDK does not grant entitlement. Activate the required API Pack in the Developer Portal.
+- scoped developer credentials
+- server-side authorization
+- tenant isolation
+- fail-closed entitlement checks
+- rate limits and quotas
+- signed webhooks
+- no service-role access for third-party applications
+- no direct database contract

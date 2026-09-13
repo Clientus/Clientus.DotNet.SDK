@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-beta.4
+
+- Improved NuGet discovery and public Developer Platform positioning.
+- Added package-specific NuGet README content for `Clientus.ApiClient` and `Clientus.Core`.
+- Added Developer Portal project URL and stronger package tags.
+- Updated public installation, developer credential, Lumi AI, webhook, API Pack and Marketplace documentation.
+- Removed stale private-beta and future-publication copy from the public SDK README.
+- Corrected package copyright encoding.
 ## 1.0.0-beta.3
 
 - Realigned the SDK to Clientus Public API v1.

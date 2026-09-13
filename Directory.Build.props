@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>beta.3</VersionSuffix>
+    <VersionSuffix>beta.4</VersionSuffix>
     <Authors>Clientus</Authors>
     <Company>Clientus</Company>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -13,9 +13,10 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright Ã‚Â© Clientus 2026</Copyright>
+    <Copyright>Copyright © Clientus 2026</Copyright>
     <PackageIcon>icon.png</PackageIcon>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <PackageProjectUrl>https://clientus.app/developer</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Clientus/Clientus.DotNet.SDK</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

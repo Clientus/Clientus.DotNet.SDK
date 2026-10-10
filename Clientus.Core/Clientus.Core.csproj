@@ -1,24 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <IsPackable>true</IsPackable>
-
     <PackageId>Clientus.Core</PackageId>
-
     <Title>Clientus Core — Shared SDK Contracts</Title>
-
     <Description>Shared contracts, models, results and exceptions for the official Clientus .NET SDK and Clientus Developer Platform integrations.</Description>
-
     <PackageTags>clientus;dotnet;sdk;api;developer-platform;contracts;models;integration;core</PackageTags>
-
-    <PackageReleaseNotes>Improved NuGet discovery and public Developer Platform metadata for the shared Clientus SDK contracts.</PackageReleaseNotes>
+    <PackageReleaseNotes>Beta.5 aligns shared SDK package metadata with the expanded read-only Clientus Public API v1 release.</PackageReleaseNotes>
   </PropertyGroup>
-
-  
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Interfaces\" />
@@ -27,21 +18,11 @@
     <Folder Include="Configuration\" />
     <Folder Include="Validation\" />
   </ItemGroup>
-  
   <ItemGroup>
-    <None Include="NUGET-README.md"
-          Pack="true"
-          PackagePath="README.md" />
-
-    <None Include="..\icon.png"
-      Pack="true"
-      PackagePath="\" />
+    <None Include="NUGET-README.md" Pack="true" PackagePath="README.md" />
+    <None Include="..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub"
-                      Version="8.0.0"
-                      PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
-  
 </Project>

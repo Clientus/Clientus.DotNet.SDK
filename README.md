@@ -9,8 +9,8 @@ The SDK uses **Clientus Public API v1**, scoped developer credentials and server
 Current package line:
 
 ```text
-Clientus.ApiClient 1.0.0-beta.4
-Clientus.Core      1.0.0-beta.4
+Clientus.ApiClient 1.0.0-beta.5
+Clientus.Core      1.0.0-beta.5
 ```
 
 Install from NuGet:
@@ -52,13 +52,26 @@ Never embed developer credentials in browser or mobile application source.
 
 ## Public API v1
 
-The current versioned business surfaces include:
+Existing versioned business surfaces include current developer/company context, customers, catalog, quotes and invoices.
 
-- current developer/company context (`profile:read`)
-- customers (`clients:read`)
-- catalog (`catalog:read`)
-- quotes (`quotes:read`)
-- invoices (`invoices:read`)
+### Beta.5 read-only expansion
+
+`1.0.0-beta.5` adds read-only SDK access for:
+
+- Business Units
+- Warehouse stock
+- Loyalty
+- Customer Intelligence
+- Retail Returns
+- Retail Distribution status
+- Advanced Retail Intelligence
+- Publishing
+- Website
+- Public Commerce
+
+These beta.5 surfaces intentionally expose **read operations only**. No create, update or delete workflow is part of the frozen beta.5 contract.
+
+Where the Public API schema intentionally defines an open object, the SDK returns `SdkNextRecord` rather than inventing a closed DTO.
 
 Scopes, entitlements, quotas and rate limits are enforced server-side.
 
@@ -70,13 +83,7 @@ AI requests remain subject to Clientus authorization, consent, entitlement and c
 
 ## Webhooks
 
-Use:
-
-```csharp
-WebhookSignatureVerifier.Verify(...)
-```
-
-before processing webhook deliveries.
+Use `WebhookSignatureVerifier.Verify(...)` before processing webhook deliveries.
 
 Webhook delivery uses signed versioned events and replay-window verification.
 
@@ -90,12 +97,7 @@ Live access remains controlled server-side by Clientus. Selecting the live envir
 
 Clientus Developer status currently has no monthly fee.
 
-The commercial model is based on:
-
-- a one-time Core API Pack
-- optional additional API packs
-- premium APIs/services with included usage
-- explicit pay-as-you-go overage after included premium usage
+The commercial model is based on a one-time Core API Pack, optional additional API packs, premium APIs/services with included usage and explicit pay-as-you-go overage after included premium usage.
 
 The Clientus server is authoritative for entitlements, metering and billing.
 
@@ -119,13 +121,4 @@ Legacy public method signatures retained for source compatibility are obsolete a
 
 ## Security principles
 
-The SDK and Developer Platform are designed around:
-
-- scoped developer credentials
-- server-side authorization
-- tenant isolation
-- fail-closed entitlement checks
-- rate limits and quotas
-- signed webhooks
-- no service-role access for third-party applications
-- no direct database contract
+The SDK and Developer Platform are designed around scoped developer credentials, server-side authorization, tenant isolation, fail-closed entitlement checks, rate limits and quotas, signed webhooks, no service-role access for third-party applications and no direct database contract.

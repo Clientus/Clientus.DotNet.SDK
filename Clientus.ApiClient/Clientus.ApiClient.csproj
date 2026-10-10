@@ -8,7 +8,7 @@
     <Title>Clientus .NET SDK - Public API, Lumi AI &amp; Webhooks</Title>
     <Description>Official .NET 8 SDK for the Clientus Developer Platform. Build authenticated integrations with Clientus Public API v1, Lumi AI, webhooks, sandbox/live environments and developer credentials.</Description>
     <PackageTags>clientus;dotnet;sdk;api;developer-platform;integration;ai;lumi;webhooks;marketplace;automation;business;saas</PackageTags>
-    <PackageReleaseNotes>Improved NuGet discovery, public Developer Platform onboarding, updated package metadata and public beta documentation for Clientus Public API v1.</PackageReleaseNotes>
+    <PackageReleaseNotes>Beta.5 adds read-only Business Units, Warehouse, Loyalty, Customer Intelligence, Retail Returns, Retail Distribution, Retail Intelligence, Publishing, Website and Public Commerce surfaces.</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Clientus.Core\Clientus.Core.csproj" />

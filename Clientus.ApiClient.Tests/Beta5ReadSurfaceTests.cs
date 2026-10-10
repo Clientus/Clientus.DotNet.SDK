@@ -97,16 +97,16 @@ public sealed class Beta5ReadSurfaceTests
     {
         var serviceTypes = new[]
         {
-            typeof(BusinessUnits.BusinessUnitsService),
-            typeof(Warehouse.WarehouseService),
-            typeof(Loyalty.LoyaltyService),
-            typeof(CustomerIntelligence.CustomerIntelligenceService),
-            typeof(RetailReturns.RetailReturnsService),
-            typeof(RetailDistribution.RetailDistributionService),
-            typeof(RetailIntelligence.RetailIntelligenceService),
-            typeof(Publishing.PublishingService),
-            typeof(Website.WebsiteService),
-            typeof(PublicCommerce.PublicCommerceService)
+            typeof(Clientus.ApiClient.BusinessUnits.BusinessUnitsService),
+            typeof(Clientus.ApiClient.Warehouse.WarehouseService),
+            typeof(Clientus.ApiClient.Loyalty.LoyaltyService),
+            typeof(Clientus.ApiClient.CustomerIntelligence.CustomerIntelligenceService),
+            typeof(Clientus.ApiClient.RetailReturns.RetailReturnsService),
+            typeof(Clientus.ApiClient.RetailDistribution.RetailDistributionService),
+            typeof(Clientus.ApiClient.RetailIntelligence.RetailIntelligenceService),
+            typeof(Clientus.ApiClient.Publishing.PublishingService),
+            typeof(Clientus.ApiClient.Website.WebsiteService),
+            typeof(Clientus.ApiClient.PublicCommerce.PublicCommerceService)
         };
 
         var forbiddenPrefixes = new[] { "Create", "Update", "Delete", "Post", "Patch", "Put" };

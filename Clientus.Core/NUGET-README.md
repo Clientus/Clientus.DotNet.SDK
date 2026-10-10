@@ -1,6 +1,6 @@
 # Clientus Core
 
-`Clientus.Core` contains the shared contracts, models, results and exceptions used by the official **Clientus .NET SDK**.
+`Clientus.Core` contains shared contracts, models, results and exceptions used by the official **Clientus .NET SDK**.
 
 Most developers should install **`Clientus.ApiClient`**, which references this package automatically.
 
@@ -8,29 +8,13 @@ Most developers should install **`Clientus.ApiClient`**, which references this p
 dotnet add package Clientus.ApiClient --prerelease
 ```
 
-## Clientus Developer Platform
+Current beta line: **1.0.0-beta.5**
 
-Clientus provides a public Developer Platform for building authenticated integrations and applications using:
-
-- Clientus Public API v1
-- scoped developer credentials
-- sandbox and live environments
-- Lumi AI
-- signed webhooks
-- API Packs, quotas and usage controls
-- Marketplace publishing foundations
-
-Start here:
-
-**https://clientus.app/developer**
-
-## When should I reference Clientus.Core directly?
-
-Reference `Clientus.Core` directly only when your project specifically needs shared SDK contracts without the full API client.
+Beta.5 is aligned with the expanded read-only Clientus Public API v1 surface. Both public NuGet packages are versioned and released together.
 
 ## Links
 
-- **Developer Portal:** https://clientus.app/developer
-- **Clientus:** https://clientus.app
-- **Official .NET SDK:** https://www.nuget.org/packages/Clientus.ApiClient
-- **Source:** https://github.com/Clientus/Clientus.DotNet.SDK
+- Developer Portal: https://clientus.app/developer
+- Clientus: https://clientus.app
+- Official .NET SDK: https://www.nuget.org/packages/Clientus.ApiClient
+- Source: https://github.com/Clientus/Clientus.DotNet.SDK

@@ -1,13 +1,15 @@
 # NuGet release process
 
-## Current package version
+## Current candidate version
 
-`1.0.0-beta.3`
+`1.0.0-beta.6`
 
 Packages:
 
 - `Clientus.ApiClient`
 - `Clientus.Core`
+
+HOME.LONG.3B prepares and certifies this package line. It does **not** authorize publication to NuGet.org and does not create a release tag.
 
 ## Release gates
 
@@ -17,38 +19,23 @@ Before any public NuGet publication:
 2. Release build must pass;
 3. full test suite must pass;
 4. both packages must pack successfully;
-5. package contents must be inspected;
-6. clean-machine installation test must pass;
-7. no credentials, secrets, service-role keys, local paths or temporary artifacts may be included.
+5. package contents must be inspectable and contain no credentials, service-role keys, local paths or temporary artifacts;
+6. a clean consumer project must install `Clientus.ApiClient` and `Clientus.Core` from the generated local feed;
+7. the consumer must compile and run against the public package surface without project references;
+8. publication/tag creation requires a separate explicit release approval.
 
 ## GitHub Actions
 
-`.github/workflows/nuget-release.yml` supports:
+`.github/workflows/build.yml` validates pull requests and `main` by restoring, building, testing, packing both packages and performing a local-feed clean-install smoke test.
 
-- manual validation through `workflow_dispatch`;
-- package publication only when `confirm_publish=PUBLISH`;
-- publication on version tags such as `v1.0.0-beta.3`;
-- `NUGET_API_KEY` stored only as a GitHub Actions environment secret.
+The same workflow has a tag-only publish job. **Do not create `v1.0.0-beta.6` until the explicit NuGet.org release gate is approved.** Tag creation would activate the publication path.
 
-The workflow must never contain the API key in source control.
+NuGet authentication uses GitHub OIDC through `NuGet/login`; no NuGet API key is committed to source control.
 
-## Initial private-beta release
+## Clean-install certification
 
-Recommended tag:
+CI creates a fresh .NET 8 console consumer, installs `Clientus.ApiClient 1.0.0-beta.6` from the generated package directory, restores, builds and runs it.
 
-`v1.0.0-beta.3`
+The smoke consumer demonstrates package restore, SDK construction with `DeveloperCredential`, sandbox configuration, availability of `client.Home`, and execution without project references or live credentials.
 
-Before creating the tag, verify that the package has completed local clean-machine certification.
-
-## Clean-machine certification
-
-The release package must be copied to a temporary empty directory, installed from the local package source, restored, built and executed without using project references back to the SDK repository.
-
-The clean-machine sample must demonstrate:
-
-- package restore;
-- SDK construction with `DeveloperCredential`;
-- sandbox environment configuration;
-- compilation against the public package surface.
-
-No live credential is required for the offline certification.
+No public NuGet publication is performed by this certification.

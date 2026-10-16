@@ -9,8 +9,8 @@ The SDK uses **Clientus Public API v1**, scoped developer credentials and server
 Current package line:
 
 ```text
-Clientus.ApiClient 1.0.0-beta.5
-Clientus.Core      1.0.0-beta.5
+Clientus.ApiClient 1.0.0-beta.6
+Clientus.Core      1.0.0-beta.6
 ```
 
 Install from NuGet:
@@ -54,22 +54,17 @@ Never embed developer credentials in browser or mobile application source.
 
 Existing versioned business surfaces include current developer/company context, customers, catalog, quotes and invoices.
 
-### Beta.5 read-only expansion
+### Beta.6 Home sandbox preview
 
-`1.0.0-beta.5` adds read-only SDK access for:
+`1.0.0-beta.6` preserves the beta.5 read-only business surfaces and adds household-scoped Home reads:
 
-- Business Units
-- Warehouse stock
-- Loyalty
-- Customer Intelligence
-- Retail Returns
-- Retail Distribution status
-- Advanced Retail Intelligence
-- Publishing
-- Website
-- Public Commerce
+- `client.Home.GetContextAsync()`
+- `client.Home.ListMembersAsync()`
+- `client.Home.GetDocumentsOverviewAsync()`
 
-These beta.5 surfaces intentionally expose **read operations only**. No create, update or delete workflow is part of the frozen beta.5 contract.
+Home requires the canonical `home:read` server scope. In HOME.LONG.3B it is **sandbox/grant-only**; live access remains fail-closed server-side. The SDK does not introduce or imply a Home API Pack price.
+
+All Home operations are read-only. Invitation emails, auth user IDs, payer IDs, personal document IDs, storage paths/buckets, hashes, signed URLs and file contents are not part of this public surface.
 
 Where the Public API schema intentionally defines an open object, the SDK returns `SdkNextRecord` rather than inventing a closed DTO.
 

@@ -10,24 +10,15 @@
 dotnet add package Clientus.ApiClient --prerelease
 ```
 
-Current beta line: **1.0.0-beta.5**
+Current beta line: **1.0.0-beta.6**
 
-## Beta.5 read surfaces
+## Beta.6 Home sandbox preview
 
-Beta.5 adds read-only access to:
+Beta.6 preserves the beta.5 read-only surfaces and adds household-scoped Home reads for context, members and Family Documents overview through `client.Home`.
 
-- Business Units
-- Warehouse stock
-- Loyalty
-- Customer Intelligence
-- Retail Returns
-- Retail Distribution status
-- Advanced Retail Intelligence
-- Publishing
-- Website
-- Public Commerce
+Home uses the server-controlled `home:read` scope and is sandbox/grant-only in HOME.LONG.3B. Live Home access remains fail-closed and no Home API Pack price is implied by this package.
 
-The new beta.5 surfaces are intentionally read-only. Server-side scopes, entitlements, tenant authority, quotas and rate limits remain authoritative.
+The Home surface is intentionally read-only. Server-side scopes, entitlements, tenant authority, quotas and rate limits remain authoritative.
 
 Where Public API v1 intentionally defines an open object schema, the SDK exposes `SdkNextRecord` instead of inventing a closed DTO.
 

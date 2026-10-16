@@ -15,6 +15,7 @@ public sealed class DeveloperDxTests
         Assert.NotNull(typeof(ClientusClient).GetProperty("Quotes"));
         Assert.NotNull(typeof(ClientusClient).GetProperty("Invoices"));
         Assert.NotNull(typeof(ClientusClient).GetProperty("Ai"));
+        Assert.NotNull(typeof(ClientusClient).GetProperty("Home"));
     }
 
     [Fact]

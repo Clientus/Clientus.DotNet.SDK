@@ -8,9 +8,9 @@ Most developers should install **`Clientus.ApiClient`**, which references this p
 dotnet add package Clientus.ApiClient --prerelease
 ```
 
-Current beta line: **1.0.0-beta.5**
+Current beta line: **1.0.0-beta.6**
 
-Beta.5 is aligned with the expanded read-only Clientus Public API v1 surface. Both public NuGet packages are versioned and released together.
+Beta.6 keeps Clientus.Core version-aligned with Clientus.ApiClient and its read-only Home sandbox preview. Both public packages are versioned together; publication remains a separate release gate.
 
 ## Links
 

@@ -8,7 +8,7 @@
     <Title>Clientus Core — Shared SDK Contracts</Title>
     <Description>Shared contracts, models, results and exceptions for the official Clientus .NET SDK and Clientus Developer Platform integrations.</Description>
     <PackageTags>clientus;dotnet;sdk;api;developer-platform;contracts;models;integration;core</PackageTags>
-    <PackageReleaseNotes>Beta.5 aligns shared SDK package metadata with the expanded read-only Clientus Public API v1 release.</PackageReleaseNotes>
+    <PackageReleaseNotes>Beta.6 keeps shared SDK package metadata aligned with the Home sandbox preview in Clientus.ApiClient.</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />

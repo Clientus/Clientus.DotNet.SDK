@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-beta.6
+
+- Added read-only household-scoped Home support through `client.Home`.
+- Added `GET /api/v1/home/context`, `GET /api/v1/home/members` and `GET /api/v1/home/documents/overview`.
+- Kept the Home surface mutation-free and based on the canonical `home:read` scope.
+- Documented Home as sandbox preview / grant-only; live Home API access remains fail-closed server-side.
+- No Home API Pack price is introduced by the SDK.
+- Added package and clean-install validation to pull-request CI.
+- Target Public API source: Clientus/clientus-ai commit `b40f330340d00df2cc6a13d55e05bdce4221d6ce`.
+- NuGet.org publication is intentionally not performed by HOME.LONG.3B.
+
 ## 1.0.0-beta.5
 
 - Added read-only Business Units support.

@@ -6,6 +6,7 @@ using Clientus.ApiClient.Configuration;
 using Clientus.ApiClient.CustomerIntelligence;
 using Clientus.ApiClient.Customers;
 using Clientus.ApiClient.Http;
+using Clientus.ApiClient.Home;
 using Clientus.ApiClient.Invoices;
 using Clientus.ApiClient.Loyalty;
 using Clientus.ApiClient.PublicCommerce;
@@ -57,6 +58,8 @@ public class ClientusClient : IDisposable
     public WebsiteService Website { get; }
     /// <summary>Gets read-only Public Commerce operations.</summary>
     public PublicCommerceService PublicCommerce { get; }
+    /// <summary>Gets read-only household-scoped Home operations.</summary>
+    public HomeService Home { get; }
 
     public AuthService Auth { get { ThrowIfDisposed(); return _auth; } }
     public CatalogService Catalog { get { ThrowIfDisposed(); _catalog.ThrowIfDisposed(); return _catalog; } }
@@ -87,6 +90,7 @@ public class ClientusClient : IDisposable
         Publishing = new PublishingService(_http);
         Website = new WebsiteService(_http);
         PublicCommerce = new PublicCommerceService(_http);
+        Home = new HomeService(_http);
     }
 
     public void Dispose()

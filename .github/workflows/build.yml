@@ -33,6 +33,59 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build
 
+      - name: Pack Clientus.ApiClient
+        run: dotnet pack Clientus.ApiClient/Clientus.ApiClient.csproj --configuration Release --no-build --output ./artifacts
+
+      - name: Pack Clientus.Core
+        run: dotnet pack Clientus.Core/Clientus.Core.csproj --configuration Release --no-build --output ./artifacts
+
+      - name: Inspect package contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -l ./artifacts/Clientus.ApiClient.1.0.0-beta.6.nupkg
+          unzip -l ./artifacts/Clientus.Core.1.0.0-beta.6.nupkg
+          test -f ./artifacts/Clientus.ApiClient.1.0.0-beta.6.nupkg
+          test -f ./artifacts/Clientus.Core.1.0.0-beta.6.nupkg
+
+      - name: Clean-install consumer smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ./artifacts/consumer
+          dotnet new console --framework net8.0 --output ./artifacts/consumer --force
+          dotnet add ./artifacts/consumer/consumer.csproj package Clientus.ApiClient --version 1.0.0-beta.6 --source "$(pwd)/artifacts"
+          cat > ./artifacts/consumer/Program.cs <<'EOF'
+          using Clientus.ApiClient;
+          using Clientus.ApiClient.Configuration;
+
+          using var client = new ClientusClient(new ClientusConfiguration
+          {
+              BaseUrl = "https://clientus.app",
+              DeveloperCredential = "clean-install-smoke-only",
+              Environment = ClientusEnvironment.Sandbox
+          });
+
+          if (client.Home is null)
+              throw new InvalidOperationException("Home service missing.");
+
+          Console.WriteLine("CLIENTUS_SDK_CLEAN_INSTALL=PASS");
+          EOF
+          dotnet restore ./artifacts/consumer/consumer.csproj --source "$(pwd)/artifacts"
+          dotnet build ./artifacts/consumer/consumer.csproj --configuration Release --no-restore
+          dotnet run --project ./artifacts/consumer/consumer.csproj --configuration Release --no-build
+
+      - name: Upload candidate packages
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: clientus-sdk-packages-${{ github.sha }}
+          path: |
+            ./artifacts/*.nupkg
+            ./artifacts/*.snupkg
+          if-no-files-found: error
+          retention-days: 14
+
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build

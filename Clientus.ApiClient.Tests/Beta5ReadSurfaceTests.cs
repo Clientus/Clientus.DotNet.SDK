@@ -66,6 +66,38 @@ public sealed class Beta5ReadSurfaceTests
     }
 
     [Fact]
+    public async Task RetailBusinessUnitScope_IsOptionalAndUsesExactQueryParameter()
+    {
+        var handler = new RecordingHandler(_ => Json("{\"data\":[]}"));
+        using var client = CreateClient(handler);
+
+        const string businessUnitId = "00000000-0000-4000-8000-000000000123";
+
+        await client.RetailReturns.ListAsync(businessUnitId: businessUnitId);
+        await client.RetailDistribution.ListChannelsAsync(businessUnitId: businessUnitId);
+        await client.RetailDistribution.ListSyncStatusAsync(businessUnitId: businessUnitId);
+        await client.RetailDistribution.ListInboundEventsAsync(businessUnitId: businessUnitId);
+        await client.RetailIntelligence.ListLocationPerformanceAsync(businessUnitId: businessUnitId);
+        await client.RetailIntelligence.ListStockHealthAsync(businessUnitId: businessUnitId);
+
+        handler.Factory = _ => Json("{\"data\":{}}");
+        await client.RetailReturns.GetAsync("return/1", businessUnitId: businessUnitId);
+
+        var expected = new[]
+        {
+            $"/api/v1/retail-returns?page=1&pageSize=25&businessUnitId={businessUnitId}",
+            $"/api/v1/retail-distribution/channels?page=1&pageSize=25&businessUnitId={businessUnitId}",
+            $"/api/v1/retail-distribution/sync-status?page=1&pageSize=25&businessUnitId={businessUnitId}",
+            $"/api/v1/retail-distribution/inbound-events?page=1&pageSize=25&businessUnitId={businessUnitId}",
+            $"/api/v1/retail-intelligence/location-performance?page=1&pageSize=25&businessUnitId={businessUnitId}",
+            $"/api/v1/retail-intelligence/stock-health?page=1&pageSize=25&businessUnitId={businessUnitId}",
+            $"/api/v1/retail-returns/return%2F1?businessUnitId={businessUnitId}"
+        };
+
+        Assert.Equal(expected, handler.Requests.Select(r => r.PathAndQuery));
+    }
+
+    [Fact]
     public async Task DetailIds_AreEscaped()
     {
         var handler = new RecordingHandler(_ => Json("{\"data\":{}}"));
